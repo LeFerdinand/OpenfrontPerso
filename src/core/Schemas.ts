@@ -141,15 +141,19 @@ export type PublicGameType = z.infer<typeof PublicGameTypeSchema>;
 
 export const PublicGameTypeSchema = z.enum(["ffa", "team", "special"]);
 
+// Permissive username/tag: any printable character (no control chars,
+// no DEL), at least one non-whitespace character, length-bounded.
 export const UsernameSchema = z
   .string()
-  .regex(/^(?=.*\S)[a-zA-Z0-9_ üÜ.]+$/u)
-  .min(3)
+  // eslint-disable-next-line no-control-regex
+  .regex(/^(?=.*\S)[^\x00-\x1F\x7F]+$/u)
+  .min(1)
   .max(27);
 
 export const ClanTagSchema = z
   .string()
-  .regex(/^[a-zA-Z0-9]{2,5}$/)
+  // eslint-disable-next-line no-control-regex
+  .regex(/^[^\x00-\x1F\x7F]{1,5}$/u)
   .nullable();
 
 const ClientInfoSchema = z.object({
@@ -253,6 +257,7 @@ export const GameConfigSchema = z.object({
   disableAlliances: z.boolean().nullable().optional(),
   waterNukes: z.boolean().nullable().optional(),
   randomSpawn: z.boolean(),
+  fogOfWar: z.boolean().nullable().optional(),
   maxPlayers: z.number().optional(),
   maxTimerValue: z.number().int().min(1).max(120).nullable().optional(), // In minutes
   spawnImmunityDuration: z.number().int().min(0).nullable().optional(), // In ticks

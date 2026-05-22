@@ -272,12 +272,13 @@ export class PrivilegeCheckerImpl implements PrivilegeChecker {
     }
   }
 
-  isColorAllowed(flares: string[], color: string): PlayerColor {
-    const allowedColors = flares
-      .filter((flare) => flare.startsWith("color:"))
-      .map((flare) => flare.split(":")[1]);
-    if (!allowedColors.includes(color)) {
-      throw new Error(`Color ${color} not allowed`);
+  isColorAllowed(_flares: string[], color: string): PlayerColor {
+    // Self-hostable: any 3- or 6-digit hex color is allowed. The
+    // closed-source API gates colors with "color:*" flares; for
+    // private/self-hosted setups we accept any valid hex string so
+    // players can pick from the dynamic palette in the UI.
+    if (!/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color)) {
+      throw new Error(`Color ${color} is not a valid hex color`);
     }
     return { color };
   }

@@ -50,6 +50,24 @@ export interface UploadOptions {
   snap?: boolean;
   /** Skip tile upload — caller already handled tiles (e.g. seek with bloom reset). */
   skipTileUpload?: boolean;
+  /**
+   * Replace the units map for the unit + structure uploads. Used by the
+   * singleplayer fog-of-war to hide enemy mobile units / structures
+   * outside the local player's vision without mutating shared FrameData.
+   */
+  unitsOverride?: ReadonlyMap<number, UnitState>;
+  /**
+   * Replace the names map for the name pass. Used by fog-of-war to hide
+   * enemy territory labels (and the troop counts that ride on them) for
+   * players whose name centroid sits in the fogged region.
+   */
+  namesOverride?: ReadonlyMap<string, NameEntry>;
+  /**
+   * Force a structures upload even if `frame.structuresDirty` is false.
+   * Needed when an override changes the visible structure set without
+   * changing the underlying simulation state.
+   */
+  forceStructuresUpload?: boolean;
 }
 
 /**
@@ -104,9 +122,10 @@ export function uploadFrameData(
   }
 
   // --- Units + structures ---
-  view.updateUnits(frame.units, frame.tick);
-  if (frame.structuresDirty) {
-    view.updateStructures(frame.units);
+  const units = opts?.unitsOverride ?? frame.units;
+  view.updateUnits(units, frame.tick);
+  if (frame.structuresDirty || opts?.forceStructuresUpload) {
+    view.updateStructures(units);
   }
 
   // --- Ephemeral effects ---
@@ -125,7 +144,12 @@ export function uploadFrameData(
   view.updateNukeTelegraphs(frame.nukeTelegraphs);
 
   // --- Names + player status ---
-  view.updateNames(frame.names, frame.players, snap, frame.playerStatus);
+  view.updateNames(
+    opts?.namesOverride ?? frame.names,
+    frame.players,
+    snap,
+    frame.playerStatus,
+  );
 
   // --- Relations ---
   view.updateRelations(frame.relationMatrix, frame.relationSize);

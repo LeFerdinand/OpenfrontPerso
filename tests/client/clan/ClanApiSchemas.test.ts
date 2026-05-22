@@ -180,16 +180,11 @@ describe("ClanStatsSchema", () => {
     teamCountWL: { "2": { wl: [4, 1] } },
   };
 
-  it("accepts a valid clan tag (2-5 alphanumeric chars)", () => {
-    for (const tag of ["AB", "abc12", "XYZAB"]) {
+  it("accepts a variety of clan tags (1-5 chars, any printable)", () => {
+    for (const tag of ["A", "AB", "abc12", "XYZAB", "AB-CD", "🎮", "@!"]) {
       const result = ClanStatsSchema.safeParse({ ...validStats, clanTag: tag });
       expect(result.success, `tag "${tag}" should be valid`).toBe(true);
     }
-  });
-
-  it("rejects tags that are too short", () => {
-    const result = ClanStatsSchema.safeParse({ ...validStats, clanTag: "A" });
-    expect(result.success).toBe(false);
   });
 
   it("rejects tags that are too long", () => {
@@ -200,10 +195,10 @@ describe("ClanStatsSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects tags with non-alphanumeric characters", () => {
+  it("rejects tags with control characters", () => {
     const result = ClanStatsSchema.safeParse({
       ...validStats,
-      clanTag: "AB-CD",
+      clanTag: "AB\x00C",
     });
     expect(result.success).toBe(false);
   });

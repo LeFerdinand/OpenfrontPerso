@@ -404,10 +404,11 @@ export function formatPlayerDisplayName(
   return clanTag ? `[${clanTag}] ${username}` : username;
 }
 
-const CLAN_TAG_CHARS = "a-zA-Z0-9";
-
-const CLAN_TAG_INVALID_CHARS = new RegExp(`[^${CLAN_TAG_CHARS}]`, "g");
+// Strip only control characters and DEL — everything else (Unicode,
+// emoji, punctuation, mixed case) is allowed.
+// eslint-disable-next-line no-control-regex
+const CLAN_TAG_INVALID_CHARS = /[\x00-\x1F\x7F]/g;
 
 export function sanitizeClanTag(tag: string): string {
-  return tag.replace(CLAN_TAG_INVALID_CHARS, "").substring(0, 5).toUpperCase();
+  return tag.replace(CLAN_TAG_INVALID_CHARS, "").substring(0, 5);
 }

@@ -16,6 +16,7 @@
 
 import type { GhostPreviewData, RendererConfig, UnitState } from "../../types";
 import {
+  UT_AIRPORT,
   UT_CITY,
   UT_DEFENSE_POST,
   UT_FACTORY,
@@ -49,7 +50,14 @@ const STRUCTURE_ORDER = [
   UT_DEFENSE_POST,
   UT_SAM_LAUNCHER,
   UT_MISSILE_SILO,
+  // Airport doesn't have a pre-baked column in icon-atlas.png — its
+  // sprite is drawn programmatically onto an extended atlas in
+  // loadAtlas() below. ATLAS_COLS is derived from this array length,
+  // so the shader gets compiled with 7 columns automatically.
+  UT_AIRPORT,
 ] as const;
+/** Atlas column reserved for the runtime-drawn airplane sprite. */
+const AIRPORT_COL = STRUCTURE_ORDER.indexOf(UT_AIRPORT);
 
 const ATLAS_COLS = STRUCTURE_ORDER.length;
 
@@ -248,16 +256,86 @@ export class StructurePass {
     img.crossOrigin = "anonymous";
     img.src = iconAtlasUrl;
     await img.decode();
+    // The on-disk icon-atlas.png ships with 6 columns. We extend it at
+    // runtime to ATLAS_COLS by painting our own airplane silhouette
+    // into the 7th cell, so structures rendering can pick up a real
+    // Airport icon without needing to regenerate the binary asset.
     const gl = this.gl;
+    let source: TexImageSource = img;
+    try {
+      const origCols = 6;
+      const colW = img.naturalWidth / origCols;
+      const newW = colW * ATLAS_COLS;
+      const h = img.naturalHeight;
+      const canvas = document.createElement("canvas");
+      canvas.width = newW;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        this.drawAirplaneIcon(ctx, AIRPORT_COL * colW, 0, colW, h);
+        source = canvas;
+      }
+    } catch (e) {
+      // Fall back to the raw 6-column image if anything in the
+      // extension path fails. Airports will render with no icon but
+      // every other structure keeps working.
+      console.warn("StructurePass: airport atlas extension failed", e);
+    }
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(
       gl.TEXTURE_2D,
       gl.TEXTURE_MIN_FILTER,
       gl.LINEAR_MIPMAP_LINEAR,
     );
+  }
+
+  /**
+   * Hand-drawn top-down airplane silhouette filling the given cell,
+   * white-on-transparent — matches the format the rest of icon-atlas
+   * uses (the shader recolors with the player's territory color).
+   */
+  private drawAirplaneIcon(
+    ctx: CanvasRenderingContext2D,
+    cellX: number,
+    cellY: number,
+    cellW: number,
+    cellH: number,
+  ): void {
+    const cx = cellX + cellW / 2;
+    const cy = cellY + cellH / 2;
+    const s = Math.min(cellW, cellH) * 0.42; // half-size
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.translate(cx, cy);
+    ctx.beginPath();
+    // Fuselage (vertical lens-ish shape) + wings + tail. Path is
+    // expressed in unit coordinates, scaled by `s`.
+    const path = new Path2D(`
+      M 0 ${-s * 0.95}
+      Q ${s * 0.12} ${-s * 0.55} ${s * 0.12} ${-s * 0.05}
+      L ${s * 0.95} ${s * 0.25}
+      L ${s * 0.95} ${s * 0.5}
+      L ${s * 0.12} ${s * 0.3}
+      L ${s * 0.12} ${s * 0.65}
+      L ${s * 0.4} ${s * 0.85}
+      L ${s * 0.4} ${s * 0.98}
+      L 0 ${s * 0.85}
+      L ${-s * 0.4} ${s * 0.98}
+      L ${-s * 0.4} ${s * 0.85}
+      L ${-s * 0.12} ${s * 0.65}
+      L ${-s * 0.12} ${s * 0.3}
+      L ${-s * 0.95} ${s * 0.5}
+      L ${-s * 0.95} ${s * 0.25}
+      L ${-s * 0.12} ${-s * 0.05}
+      Q ${-s * 0.12} ${-s * 0.55} 0 ${-s * 0.95}
+      Z
+    `);
+    ctx.fill(path);
+    ctx.restore();
   }
 
   updateStructures(units: Map<number, UnitState>): void {

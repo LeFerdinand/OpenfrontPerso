@@ -1,4 +1,4 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { assetUrl } from "../../../core/AssetUrls";
 import {
@@ -6,19 +6,10 @@ import {
   GameMapType,
   mapCategories,
 } from "../../../core/game/Game";
+import type { LobbyTemplate } from "../../LobbyTemplates";
 import { translateText } from "../../Utils";
 import "./MapDisplay";
 const randomMap = assetUrl("images/RandomMap.webp");
-
-const featuredMaps: GameMapType[] = [
-  GameMapType.World,
-  GameMapType.Europe,
-  GameMapType.NorthAmerica,
-  GameMapType.SouthAmerica,
-  GameMapType.Asia,
-  GameMapType.Africa,
-  GameMapType.Japan,
-];
 
 @customElement("map-picker")
 export class MapPicker extends LitElement {
@@ -30,7 +21,28 @@ export class MapPicker extends LitElement {
     new Map();
   @property({ attribute: false }) onSelectMap?: (map: GameMapType) => void;
   @property({ attribute: false }) onSelectRandom?: () => void;
-  @state() private showAllMaps = false;
+  /**
+   * When provided, an extra "Mes modèles" tab is rendered next to the
+   * map list. Templates are managed by the parent (host-lobby modal) —
+   * the picker only dispatches user interactions back through the
+   * callbacks.
+   */
+  @property({ attribute: false }) templates?: LobbyTemplate[];
+  /**
+   * Called when the user types a name and confirms. The new template
+   * is saved with whatever map / options are currently selected on the
+   * host modal — no extra map override here (the user can pick any
+   * specific map or random directly from the maps grid that's also
+   * shown in this tab).
+   */
+  @property({ attribute: false }) onSaveTemplate?: (name: string) => void;
+  @property({ attribute: false }) onApplyTemplate?: (id: string) => void;
+  @property({ attribute: false }) onDeleteTemplate?: (id: string) => void;
+
+  @state() private activeTab: "maps" | "templates" = "maps";
+  /** Inline "new template" name input — visible while naming. */
+  @state() private creating = false;
+  @state() private draftName: string = "";
 
   createRenderRoot() {
     return this;
@@ -50,6 +62,10 @@ export class MapPicker extends LitElement {
 
   private getWins(mapValue: GameMapType): Set<Difficulty> {
     return this.mapWins?.get(mapValue) ?? new Set();
+  }
+
+  private hasTemplatesTab(): boolean {
+    return this.onSaveTemplate !== undefined;
   }
 
   private renderMapCard(mapValue: GameMapType) {
@@ -92,59 +108,197 @@ export class MapPicker extends LitElement {
     </div>`;
   }
 
-  private renderFeaturedMaps() {
-    let featuredMapList = featuredMaps;
-    if (!this.useRandomMap && !featuredMapList.includes(this.selectedMap)) {
-      featuredMapList = [this.selectedMap, ...featuredMaps];
-    }
-    return html`<div class="w-full">
-      <h4
-        class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 pl-2"
-      >
-        ${translateText("map_categories.featured")}
-      </h4>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        ${featuredMapList.map((mapValue) => this.renderMapCard(mapValue))}
+  private renderTemplatesTab() {
+    const templates = this.templates ?? [];
+    return html`
+      <div class="w-full space-y-8">
+        <div>
+          <h4
+            class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 pl-2"
+          >
+            ${translateText("map.templates")}
+          </h4>
+          <div
+            class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch"
+          >
+            ${this.creating ? this.renderNameInput() : this.renderAddButton()}
+            ${templates.map((t) => this.renderTemplateCard(t))}
+          </div>
+          ${templates.length === 0 && !this.creating
+            ? html`<p
+                class="mt-6 text-xs text-white/40 text-center italic px-4"
+              >
+                ${translateText("map.templates_empty")}
+              </p>`
+            : nothing}
+        </div>
+        <!-- All maps below, so the user can pick a specific map for the
+             template they're about to create without leaving this tab. -->
+        ${this.renderAllMaps()}
       </div>
-    </div>`;
+    `;
+  }
+
+  private renderAddButton() {
+    return html`
+      <button
+        type="button"
+        class="w-full aspect-[2/1] flex items-center justify-center rounded-xl border-2 border-dashed border-white/20 hover:border-malibu-blue hover:bg-malibu-blue/10 text-white/70 hover:text-white transition-all duration-200 active:scale-95"
+        @click=${this.beginCreate}
+        title=${translateText("map.add_template")}
+      >
+        <div class="flex flex-col items-center gap-1">
+          <span class="text-3xl leading-none">+</span>
+          <span
+            class="text-[10px] font-bold uppercase tracking-wider px-2 text-center"
+            >${translateText("map.add_template")}</span
+          >
+        </div>
+      </button>
+    `;
+  }
+
+  private renderNameInput() {
+    return html`
+      <div
+        class="w-full aspect-[2/1] rounded-xl border border-malibu-blue/40 bg-malibu-blue/10 p-3 flex flex-col justify-center gap-2"
+      >
+        <input
+          type="text"
+          .value=${this.draftName}
+          @input=${(e: Event) =>
+            (this.draftName = (e.target as HTMLInputElement).value)}
+          placeholder=${translateText("map.template_name_placeholder")}
+          class="w-full px-2 py-1.5 rounded-md bg-black/40 border border-white/20 text-white text-sm placeholder-white/40 focus:outline-none focus:border-malibu-blue/60"
+          maxlength="40"
+          autofocus
+          @keydown=${(e: KeyboardEvent) => {
+            if (e.key === "Enter") this.confirmCreate();
+            if (e.key === "Escape") this.cancelCreate();
+          }}
+        />
+        <div class="flex gap-1.5">
+          <button
+            type="button"
+            @click=${this.cancelCreate}
+            class="flex-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white/80"
+          >
+            ${translateText("common.cancel")}
+          </button>
+          <button
+            type="button"
+            @click=${this.confirmCreate}
+            class="flex-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-malibu-blue/30 hover:bg-malibu-blue/50 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            ?disabled=${this.draftName.trim() === ""}
+          >
+            ${translateText("common.confirm")}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  private mapKeyFor(mapValue: GameMapType): string | undefined {
+    return Object.entries(GameMapType).find(
+      ([_, value]) => value === mapValue,
+    )?.[0];
+  }
+
+  private beginCreate = () => {
+    this.creating = true;
+    this.draftName = "";
+  };
+
+  private cancelCreate = () => {
+    this.creating = false;
+    this.draftName = "";
+  };
+
+  private confirmCreate = () => {
+    const name = this.draftName.trim();
+    if (name === "") return;
+    this.onSaveTemplate?.(name);
+    this.creating = false;
+    this.draftName = "";
+  };
+
+  private renderTemplateCard(t: LobbyTemplate) {
+    const mapLabel = t.config.useRandomMap
+      ? translateText("map.random")
+      : translateText(`map.${this.mapKeyFor(t.config.selectedMap)?.toLowerCase()}`);
+    return html`
+      <div
+        class="relative w-full aspect-[2/1] rounded-xl border bg-white/5 border-white/10 hover:bg-malibu-blue/10 hover:border-malibu-blue/40 hover:-translate-y-1 cursor-pointer transition-all duration-200 active:scale-95 overflow-hidden"
+        @click=${() => this.onApplyTemplate?.(t.id)}
+        title=${t.name}
+      >
+        <div class="absolute inset-0 p-3 flex flex-col justify-end gap-0.5">
+          <span
+            class="text-sm font-bold uppercase tracking-wider text-white truncate leading-tight"
+            >${t.name}</span
+          >
+          <span
+            class="text-[10px] font-medium uppercase tracking-wider text-white/50 truncate leading-tight"
+            >${mapLabel}</span
+          >
+        </div>
+        <button
+          type="button"
+          @click=${(e: Event) => {
+            e.stopPropagation();
+            this.onDeleteTemplate?.(t.id);
+          }}
+          class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/50 hover:bg-red-500/80 text-white/80 hover:text-white transition-colors"
+          title=${translateText("map.delete_template")}
+          aria-label=${translateText("map.delete_template")}
+        >
+          ×
+        </button>
+      </div>
+    `;
   }
 
   render() {
+    const hasTemplates = this.hasTemplatesTab();
     return html`
       <div class="space-y-8">
-        <div class="w-full">
-          <div
-            role="tablist"
-            aria-label="${translateText("map.map")}"
-            class="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/20 p-1"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected=${!this.showAllMaps}
-              class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${this
-                .showAllMaps
-                ? "text-white/60 hover:text-white"
-                : "bg-malibu-blue/20 text-white shadow-[var(--shadow-malibu-blue-soft)]"}"
-              @click=${() => (this.showAllMaps = false)}
-            >
-              ${translateText("map.featured")}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected=${this.showAllMaps}
-              class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${this
-                .showAllMaps
-                ? "bg-malibu-blue/20 text-white shadow-[var(--shadow-malibu-blue-soft)]"
-                : "text-white/60 hover:text-white"}"
-              @click=${() => (this.showAllMaps = true)}
-            >
-              ${translateText("map.all")}
-            </button>
-          </div>
-        </div>
-        ${this.showAllMaps ? this.renderAllMaps() : this.renderFeaturedMaps()}
+        ${hasTemplates
+          ? html`<div class="w-full">
+              <div
+                role="tablist"
+                aria-label="${translateText("map.map")}"
+                class="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/20 p-1"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected=${this.activeTab === "maps"}
+                  class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${this
+                    .activeTab === "maps"
+                    ? "bg-malibu-blue/20 text-white shadow-[var(--shadow-malibu-blue-soft)]"
+                    : "text-white/60 hover:text-white"}"
+                  @click=${() => (this.activeTab = "maps")}
+                >
+                  ${translateText("map.all")}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected=${this.activeTab === "templates"}
+                  class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${this
+                    .activeTab === "templates"
+                    ? "bg-malibu-blue/20 text-white shadow-[var(--shadow-malibu-blue-soft)]"
+                    : "text-white/60 hover:text-white"}"
+                  @click=${() => (this.activeTab = "templates")}
+                >
+                  ${translateText("map.templates")}
+                </button>
+              </div>
+            </div>`
+          : nothing}
+        ${this.activeTab === "templates" && hasTemplates
+          ? this.renderTemplatesTab()
+          : this.renderAllMaps()}
         <div
           class="w-full ${this.randomMapDivider
             ? "pt-4 border-t border-white/5"

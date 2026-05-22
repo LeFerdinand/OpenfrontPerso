@@ -21,9 +21,13 @@ out vec4 fragColor;
 const float FLAG_FLICKER        = 1.0;
 const float FLAG_ANGRY          = 2.0;
 const float FLAG_TRADE_FRIENDLY = 3.0;
+const float FLAG_PLANE          = 4.0;
 
 // Ally color for trade-friendly override (yellow — matches affiliation.ts ALLY)
 const vec3 ALLY_COLOR = vec3(1.0, 1.0, 0.0);
+// Plane alt-view colors: yellow for own/ally, pink for everyone else.
+const vec3 PLANE_FRIENDLY_COLOR = vec3(1.0, 1.0, 0.0);
+const vec3 PLANE_ENEMY_COLOR    = vec3(1.0, 0.4, 0.7);
 
 // Flicker hot colors: red → orange → yellow → white
 const vec3 FLICKER_COLORS[4] = vec3[4](
@@ -43,10 +47,20 @@ void main() {
 
   // Alt-view: solid affiliation color, no gray-replacement bands
   if (uAltView != 0) {
-    // Enemy trade ships heading to a self/allied port render as yellow (ally)
-    vec3 ac = vFlags > 2.5
-      ? ALLY_COLOR
-      : texelFetch(uAffiliation, ivec2(int(vOwnerID), 1), 0).rgb;
+    vec3 ac;
+    if (vFlags > 3.5) {
+      // PLANE: yellow if local player sees this owner as self/ally
+      // (affiliation row 1 returns green for self, yellow for ally —
+      // both have green channel > 0.5; enemy is red, green channel 0).
+      vec3 aff = texelFetch(uAffiliation, ivec2(int(vOwnerID), 1), 0).rgb;
+      bool friendly = aff.g > 0.5;
+      ac = friendly ? PLANE_FRIENDLY_COLOR : PLANE_ENEMY_COLOR;
+    } else if (vFlags > 2.5) {
+      // Enemy trade ships heading to a self/allied port render as ally
+      ac = ALLY_COLOR;
+    } else {
+      ac = texelFetch(uAffiliation, ivec2(int(vOwnerID), 1), 0).rgb;
+    }
     fragColor = vec4(ac, texel.a);
     return;
   }

@@ -29,6 +29,14 @@ import "./components/LobbyPlayerView";
 import "./components/ToggleInputCard";
 import { modalHeader } from "./components/ui/ModalHeader";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
+import {
+  addTemplate,
+  deleteTemplate as removeTemplateById,
+  loadTemplates,
+  saveTemplates,
+  type LobbyTemplate,
+  type LobbyTemplateConfig,
+} from "./LobbyTemplates";
 import { JoinLobbyEvent } from "./Main";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import {
@@ -74,6 +82,7 @@ export class HostLobbyModal extends BaseModal {
   @state() private startingGoldValue: number | undefined = undefined;
   @state() private disableAlliances: boolean = false;
   @state() private waterNukes: boolean = false;
+  @state() private fogOfWar: boolean = false;
   @state() private lobbyId = "";
   @state() private lobbyUrlSuffix = "";
   @state() private clients: ClientInfo[] = [];
@@ -87,6 +96,7 @@ export class HostLobbyModal extends BaseModal {
   @state() private hostCheatStartingGold: boolean = false;
   @state() private hostCheatStartingGoldValue: number | undefined = undefined;
   @state() private lobbyCreatorClientID: string = "";
+  @state() private templates: LobbyTemplate[] = loadTemplates();
 
   @property({ attribute: false }) eventBus: EventBus | null = null;
   // Timers for debouncing slider changes
@@ -298,6 +308,10 @@ export class HostLobbyModal extends BaseModal {
                 selected: this.selectedMap,
                 useRandom: this.useRandomMap,
                 randomMapDivider: true,
+                templates: this.templates,
+                onSaveTemplate: this.handleSaveTemplate,
+                onApplyTemplate: this.handleApplyTemplate,
+                onDeleteTemplate: this.handleDeleteTemplate,
               },
               difficulty: {
                 selected: this.selectedDifficulty,
@@ -358,6 +372,10 @@ export class HostLobbyModal extends BaseModal {
                   {
                     labelKey: "host_modal.water_nukes",
                     checked: this.waterNukes,
+                  },
+                  {
+                    labelKey: "host_modal.fog_of_war",
+                    checked: this.fogOfWar,
                   },
                   {
                     labelKey: "host_modal.host_cheats",
@@ -541,6 +559,7 @@ export class HostLobbyModal extends BaseModal {
     this.startingGoldValue = undefined;
     this.disableAlliances = false;
     this.waterNukes = false;
+    this.fogOfWar = false;
     this.hostCheatsEnabled = false;
     this.hostCheatInfiniteGold = false;
     this.hostCheatInfiniteTroops = false;
@@ -630,6 +649,10 @@ export class HostLobbyModal extends BaseModal {
         break;
       case "host_modal.water_nukes":
         this.waterNukes = checked;
+        this.putGameConfig();
+        break;
+      case "host_modal.fog_of_war":
+        this.fogOfWar = checked;
         this.putGameConfig();
         break;
       case "host_modal.host_cheats":
@@ -848,6 +871,97 @@ export class HostLobbyModal extends BaseModal {
     this.putGameConfig();
   };
 
+  // ─── Lobby templates ──────────────────────────────────────────────
+
+  private currentConfigSnapshot(): LobbyTemplateConfig {
+    return {
+      selectedMap: this.selectedMap,
+      useRandomMap: this.useRandomMap,
+      selectedDifficulty: this.selectedDifficulty,
+      gameMode: this.gameMode,
+      teamCount: this.teamCount,
+      bots: this.bots,
+      nations: this.nations,
+      instantBuild: this.instantBuild,
+      randomSpawn: this.randomSpawn,
+      donateGold: this.donateGold,
+      donateTroops: this.donateTroops,
+      infiniteGold: this.infiniteGold,
+      infiniteTroops: this.infiniteTroops,
+      compactMap: this.compactMap,
+      disableAlliances: this.disableAlliances,
+      waterNukes: this.waterNukes,
+      fogOfWar: this.fogOfWar,
+      maxTimer: this.maxTimer,
+      maxTimerValue: this.maxTimerValue,
+      goldMultiplier: this.goldMultiplier,
+      goldMultiplierValue: this.goldMultiplierValue,
+      startingGold: this.startingGold,
+      startingGoldValue: this.startingGoldValue,
+      spawnImmunity: this.spawnImmunity,
+      spawnImmunityDurationMinutes: this.spawnImmunityDurationMinutes,
+      disabledUnits: [...this.disabledUnits],
+    };
+  }
+
+  private handleSaveTemplate = (name: string) => {
+    const trimmed = name.trim();
+    if (trimmed === "") return;
+    this.templates = addTemplate(
+      this.templates,
+      trimmed,
+      this.currentConfigSnapshot(),
+    );
+    saveTemplates(this.templates);
+  };
+
+  private handleApplyTemplate = (id: string) => {
+    const template = this.templates.find((t) => t.id === id);
+    if (!template) return;
+    const c = template.config;
+    this.selectedMap = c.selectedMap;
+    this.useRandomMap = c.useRandomMap;
+    this.selectedDifficulty = c.selectedDifficulty;
+    this.gameMode = c.gameMode;
+    this.teamCount = c.teamCount;
+    this.bots = c.bots;
+    this.nations = c.nations;
+    this.instantBuild = c.instantBuild;
+    this.randomSpawn = c.randomSpawn;
+    this.donateGold = c.donateGold;
+    this.donateTroops = c.donateTroops;
+    this.infiniteGold = c.infiniteGold;
+    this.infiniteTroops = c.infiniteTroops;
+    this.compactMap = c.compactMap;
+    this.disableAlliances = c.disableAlliances;
+    this.waterNukes = c.waterNukes;
+    this.fogOfWar = c.fogOfWar;
+    this.maxTimer = c.maxTimer;
+    this.maxTimerValue = c.maxTimerValue;
+    this.goldMultiplier = c.goldMultiplier;
+    this.goldMultiplierValue = c.goldMultiplierValue;
+    this.startingGold = c.startingGold;
+    this.startingGoldValue = c.startingGoldValue;
+    this.spawnImmunity = c.spawnImmunity;
+    this.spawnImmunityDurationMinutes = c.spawnImmunityDurationMinutes;
+    this.disabledUnits = [...c.disabledUnits];
+    void this.loadNationCount();
+    this.putGameConfig();
+  };
+
+  private handleDeleteTemplate = (id: string) => {
+    const template = this.templates.find((t) => t.id === id);
+    if (template === undefined) return;
+    const confirmed = window.confirm(
+      translateText("host_modal.template_delete_confirm", {
+        name: template.name,
+      }),
+    );
+    if (!confirmed) return;
+    this.templates = removeTemplateById(this.templates, id);
+    saveTemplates(this.templates);
+  };
+
   private handleInfiniteGoldChange = (val: boolean) => {
     this.infiniteGold = val;
     this.putGameConfig();
@@ -901,7 +1015,7 @@ export class HostLobbyModal extends BaseModal {
   private handleNationsChange = (e: Event) => {
     const customEvent = e as CustomEvent<{ value: number }>;
     const value = customEvent.detail.value;
-    if (isNaN(value) || value < 0 || value > 400) {
+    if (isNaN(value) || value < 0 || value > 170) {
       return;
     }
     this.nations = value;
@@ -973,6 +1087,7 @@ export class HostLobbyModal extends BaseModal {
                 : null,
             disableAlliances: this.disableAlliances || null,
             waterNukes: this.waterNukes ? true : null,
+            fogOfWar: this.fogOfWar ? true : null,
             hostCheats: this.hostCheatsEnabled
               ? {
                   infiniteGold: this.hostCheatInfiniteGold || undefined,
@@ -1031,10 +1146,12 @@ export class HostLobbyModal extends BaseModal {
       const manifest = await mapData.manifest();
       // Only update if the map hasn't changed
       if (this.selectedMap === currentMap) {
-        this.defaultNationCount = manifest.nations.length;
+        // Cap at 170 — same as the UI slider's max.
+        const maxNations = Math.min(170, manifest.nations.length);
+        this.defaultNationCount = maxNations;
         this.nations = this.compactMap
-          ? Math.max(0, Math.floor(manifest.nations.length * 0.25))
-          : manifest.nations.length;
+          ? Math.max(0, Math.floor(maxNations * 0.25))
+          : maxNations;
       }
     } catch (error) {
       console.warn("Failed to load nation count", error);

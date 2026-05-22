@@ -62,6 +62,7 @@ export async function createGameRunner(
     gameMap.additionalNations,
     humans.length,
     random,
+    gameMap.gameMap,
   );
 
   const game: Game = createGame(
@@ -99,6 +100,15 @@ export class GameRunner {
     if (this.game.config().gameConfig().gameType !== GameType.Singleplayer) {
       this.game.addExecution(new SpawnTimerExecution());
     }
+    // ORDER MATTERS in random-spawn mode: nations must be queued
+    // BEFORE the human's SpawnExecution. Otherwise the human's
+    // SpawnExecution runs first and (in singleplayer) ends the spawn
+    // phase immediately — every NationExecution that hadn't ticked
+    // yet sees `inSpawnPhase=false`, skips its spawn branch, then
+    // dies on the `isAlive()` check because it has no tiles.
+    if (this.game.config().spawnNations()) {
+      this.game.addExecution(...this.execManager.nationExecutions());
+    }
     if (this.game.config().isRandomSpawn()) {
       this.game.addExecution(...this.execManager.spawnPlayers());
     }
@@ -106,9 +116,6 @@ export class GameRunner {
       this.game.addExecution(
         ...this.execManager.spawnTribes(this.game.config().bots()),
       );
-    }
-    if (this.game.config().spawnNations()) {
-      this.game.addExecution(...this.execManager.nationExecutions());
     }
     this.game.addExecution(new WinCheckExecution());
     if (!this.game.config().isUnitDisabled(UnitType.Factory)) {

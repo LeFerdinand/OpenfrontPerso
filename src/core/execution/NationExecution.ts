@@ -104,18 +104,27 @@ export class NationExecution implements Execution {
       return;
     }
 
-    if (this.mg.inSpawnPhase()) {
-      if (this.player.hasSpawned()) {
-        // Already on the map — periodically re-spawn so the nation
-        // visibly hops to different locations during the spawn phase.
-        if (ticks % this.attackRate !== this.attackTick) {
-          return;
-        }
-      } else if (this.spawnExecAdded) {
-        // First SpawnExecution already queued, wait for it to land.
-        return;
-      }
-      // Place nations without a spawn cell (Dynamically created for HumansVsNations) randomly by SpawnExecution
+    // Spawn block: queue a SpawnExecution exactly once. We don't gate
+    // this on `inSpawnPhase()` anymore — in random-spawn singleplayer
+    // the human's SpawnExecution can end the spawn phase before the
+    // nation gets a chance to tick, and the previous code would then
+    // skip this block entirely and kill the nation on the isAlive
+    // check below. As long as we have a real spawn anchor we queue our
+    // SpawnExec; the SpawnExec itself runs activeDuringSpawnPhase=true
+    // so it can land tiles even after the phase ended.
+    //
+    // Tests (and any other code path) that pre-spawn nations by
+    // directly conquering tiles never flip our `spawnExecAdded` flag,
+    // and don't call setSpawnTile so `hasSpawned()` stays false. Use
+    // `isAlive()` (= has tiles) as the canonical "already spawned"
+    // signal here so the AI starts ticking instead of requeuing a
+    // SpawnExecution that would clobber the test's tile layout.
+    if (!this.spawnExecAdded && this.player.isAlive()) {
+      this.spawnExecAdded = true;
+    }
+    if (!this.spawnExecAdded) {
+      // Place nations without a spawn cell (dynamically created for
+      // HumansVsNations) via a random SpawnExecution.
       if (this.nation.spawnCell === undefined) {
         this.mg.addExecution(
           new SpawnExecution(this.gameID, this.nation.playerInfo),
@@ -151,6 +160,7 @@ export class NationExecution implements Execution {
 
       if (rl === null) {
         console.warn(`cannot spawn ${this.nation.playerInfo.name}`);
+        // Don't give up forever — the next tick may find a free tile.
         return;
       }
 
@@ -161,9 +171,35 @@ export class NationExecution implements Execution {
       return;
     }
 
+    // SpawnExecution queued. Two failure modes to tell apart:
+    //   - Pending: no tiles AND never spawned for real (no setSpawnTile
+    //     called) → our SpawnExec is still in unInitExecs; just wait.
+    //   - Dead: had tiles before, lost them all → mark inactive.
     if (!this.player.isAlive()) {
+      if (!this.player.hasSpawned()) {
+        return;
+      }
       //removeOnDeath is called from nation's PlayerExecution
       this.active = false;
+      return;
+    }
+
+    if (this.mg.inSpawnPhase()) {
+      // Already on the map — periodically re-spawn so the nation
+      // visibly hops to different locations during the spawn phase.
+      // Only relevant for multiplayer where the spawn phase has a
+      // fixed duration; in singleplayer it ends on first human spawn.
+      if (ticks % this.attackRate !== this.attackTick) {
+        return;
+      }
+      if (this.nation.spawnCell !== undefined) {
+        const rl = this.randomSpawnLand();
+        if (rl !== null) {
+          this.mg.addExecution(
+            new SpawnExecution(this.gameID, this.nation.playerInfo, rl),
+          );
+        }
+      }
       return;
     }
 

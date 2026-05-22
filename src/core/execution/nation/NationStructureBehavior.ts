@@ -52,6 +52,13 @@ function getStructureRatios(
       ratioPerCity: 0.75,
       perceivedCostIncreasePerOwned: 1,
     },
+    // Airports are a "luxury" income building: ~50% more expensive than
+    // ports, ~40% more gold per trade. Fewer per city than ports so
+    // nations diversify rather than spam them.
+    [UnitType.Airport]: {
+      ratioPerCity: 0.4,
+      perceivedCostIncreasePerOwned: 0.6,
+    },
     [UnitType.SAMLauncher]: {
       ratioPerCity: SAM_RATIO_BY_DIFFICULTY[difficulty],
       perceivedCostIncreasePerOwned: 0.3,
@@ -468,6 +475,7 @@ export class NationStructureBehavior {
     const buildOrder: UnitType[] = [
       UnitType.Port,
       UnitType.Factory,
+      UnitType.Airport,
       UnitType.SAMLauncher,
       UnitType.MissileSilo,
     ];
@@ -880,9 +888,43 @@ export class NationStructureBehavior {
         return this.portValue();
       case UnitType.SAMLauncher:
         return this.samLauncherValue();
+      case UnitType.Airport:
+        return this.airportValue();
       default:
         throw new Error(`Value function not implemented for ${type}`);
     }
+  }
+
+  /**
+   * Value function for airports: prefer to be away from existing
+   * airports (so trade routes spread across the map) and a bit set
+   * back from the border for safety. All `closestTile` distances are
+   * clamped to finite values so an empty set never returns Infinity
+   * into the score comparison.
+   */
+  private airportValue(): (tile: TileRef) => number {
+    const game = this.game;
+    const player = this.player;
+    const borderTiles = player.borderTiles();
+    const otherUnits = player.units(UnitType.Airport);
+    const { borderSpacing, structureSpacing } = this.spacingConstants();
+
+    return (tile) => {
+      let w = 0;
+      const [, closestBorderDist] = closestTile(game, borderTiles, tile);
+      w += Math.min(
+        Number.isFinite(closestBorderDist) ? closestBorderDist : borderSpacing,
+        borderSpacing,
+      );
+      const otherTiles: Set<TileRef> = new Set(otherUnits.map((u) => u.tile()));
+      otherTiles.delete(tile);
+      const [, closestOtherDist] = closestTile(game, otherTiles, tile);
+      w += Math.min(
+        Number.isFinite(closestOtherDist) ? closestOtherDist : structureSpacing,
+        structureSpacing,
+      );
+      return w;
+    };
   }
 
   /**

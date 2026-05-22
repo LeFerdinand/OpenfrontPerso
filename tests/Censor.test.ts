@@ -19,8 +19,12 @@ describe("username.ts functions", () => {
       expect(res.isValid).toBe(false);
       expect(res.error).toBeDefined();
     });
-    test("rejects too short", () => {
-      const res = validateUsername("ab");
+    test("rejects empty username", () => {
+      const res = validateUsername("");
+      expect(res.isValid).toBe(false);
+    });
+    test("rejects whitespace-only username", () => {
+      const res = validateUsername("   ");
       expect(res.isValid).toBe(false);
     });
     test("rejects too long", () => {
@@ -28,9 +32,13 @@ describe("username.ts functions", () => {
       const res = validateUsername(long);
       expect(res.isValid).toBe(false);
     });
-    test("rejects invalid chars", () => {
-      const res = validateUsername("Invalid!Name");
+    test("rejects control characters", () => {
+      const res = validateUsername("Name\x00here");
       expect(res.isValid).toBe(false);
+    });
+    test("accepts punctuation and special chars", () => {
+      const res = validateUsername("Invalid!Name");
+      expect(res.isValid).toBe(true);
     });
     test("accepts valid ASCII names", () => {
       const res = validateUsername("Good_Name123");
@@ -48,14 +56,18 @@ describe("username.ts functions", () => {
       expect(res.isValid).toBe(true);
     });
 
-    test("rejects too short clan tag", () => {
+    test("accepts single-character clan tag", () => {
       const res = validateClanTag("A");
-      expect(res.isValid).toBe(false);
-      expect(res.error).toBe("username.tag_too_short");
+      expect(res.isValid).toBe(true);
     });
 
-    test("rejects invalid clan tag characters", () => {
+    test("accepts punctuation in clan tag", () => {
       const res = validateClanTag("A!");
+      expect(res.isValid).toBe(true);
+    });
+
+    test("rejects clan tag with control characters", () => {
+      const res = validateClanTag("A\x00B");
       expect(res.isValid).toBe(false);
       expect(res.error).toBe("username.tag_invalid_chars");
     });

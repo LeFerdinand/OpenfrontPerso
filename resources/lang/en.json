@@ -36,7 +36,6 @@
     "discord_avatar_alt": "Discord profile avatar",
     "user_avatar_alt": "{username}'s avatar",
     "create": "Create Lobby",
-    "join": "Join Lobby",
     "solo": "Solo",
     "game_info": "Game info",
     "github": "GitHub",
@@ -45,13 +44,10 @@
     "terms_of_service": "Terms of Service",
     "copyright": "© OpenFront™ and Contributors",
     "play": "Play",
-    "news": "News",
     "store": "Store",
     "settings": "Settings",
-    "leaderboard": "Leaderboard",
     "account": "Account",
     "help": "Help",
-    "clans": "Clans",
     "menu": "Menu",
     "troubleshooting": "Troubleshooting",
     "go_to_troubleshooting": "Go to our troubleshooting page"
@@ -434,8 +430,12 @@
   },
   "map": {
     "map": "Map",
-    "featured": "Featured",
-    "all": "All",
+    "all": "Tout",
+    "templates": "Mes modèles",
+    "add_template": "Nouveau modèle",
+    "delete_template": "Supprimer ce modèle",
+    "templates_empty": "Aucun modèle enregistré. Configurez votre partie puis cliquez sur + pour la sauvegarder.",
+    "template_name_placeholder": "Nom du modèle",
     "world": "World",
     "giantworldmap": "Giant World Map",
     "europe": "Europe",
@@ -550,7 +550,6 @@
     "waiting_for_players": "Waiting for players",
     "connecting": "Connecting to lobby...",
     "starting_in": "Starting in {time}",
-    "starting_game": "Starting…",
     "teams_hvn": "Humans vs Nations",
     "teams_hvn_detailed": "{num} Humans vs {num} Nations",
     "teams": "{num} teams",
@@ -583,6 +582,7 @@
     "mode": "Mode",
     "team_count": "Number of Teams",
     "options_title": "Options",
+    "template_delete_confirm": "Supprimer le modèle « {name} » ?",
     "bots": "Tribes: ",
     "bots_disabled": "Disabled",
     "nations": "Nations: ",
@@ -598,6 +598,7 @@
     "compact_map": "Compact Map",
     "disable_alliances": "Disable alliances",
     "water_nukes": "Water nukes",
+    "fog_of_war": "Brouillard de guerre",
     "enables_title": "Disable Units",
     "player": "Player",
     "players": "Players",
@@ -653,9 +654,6 @@
     "teams": "Teams"
   },
   "mode_selector": {
-    "teams_title": "Teams",
-    "teams_count": "{teamCount} teams",
-    "teams_of": "{teamCount} teams of {playersPerTeam}",
     "ranked_title": "Ranked",
     "ranked_1v1_title": "1v1",
     "ranked_2v2_title": "2v2",
@@ -680,7 +678,8 @@
     "peace_time": "4min Peace",
     "peace_time_label": "PVP Immunity",
     "water_nukes": "Water Nukes",
-    "water_nukes_label": "Water Nukes"
+    "water_nukes_label": "Water Nukes",
+    "fog_of_war_label": "Brouillard de guerre"
   },
   "select_lang": {
     "title": "Select Language"
@@ -696,7 +695,9 @@
     "atom_bomb": "Atom Bomb",
     "hydrogen_bomb": "Hydrogen Bomb",
     "mirv": "MIRV",
-    "factory": "Factory"
+    "factory": "Factory",
+    "airport": "Aéroport",
+    "plane": "Avion"
   },
   "user_setting": {
     "title": "Settings",
@@ -923,7 +924,8 @@
       "port": "Sends trade ships to generate gold",
       "defense_post": "Increases defenses of nearby borders",
       "city": "Increases max population",
-      "factory": "Creates railroads and spawns trains"
+      "factory": "Creates railroads and spawns trains",
+      "airport": "Envoie des avions vers d'autres aéroports pour gagner de l'or"
     },
     "warship_shift_hint": "Hold Shift and drag to select multiple warships at once",
     "not_enough_money": "Not enough money"
@@ -1140,14 +1142,13 @@
     "purchase_success": "Purchase succeeded: {name}"
   },
   "territory_patterns": {
-    "title": "Skins",
+    "title": "Sélectionner la couleur",
     "purchase": "Purchase",
     "pattern": {
       "default": "Default"
     },
-    "select_skin": "Select Skin",
-    "selected": "selected",
-    "search": "Search..."
+    "select_skin": "Sélectionner la couleur",
+    "selected": "selected"
   },
   "cosmetics": {
     "artist_label": "Artist:",

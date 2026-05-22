@@ -18,6 +18,7 @@ import {
   UnitType,
 } from "../../core/game/Game";
 import { TeamCountConfig } from "../../core/Schemas";
+import type { LobbyTemplate } from "../LobbyTemplates";
 import { translateText } from "../Utils";
 import "./Difficulties";
 import "./FluentSlider";
@@ -174,6 +175,15 @@ export interface GameConfigSettingsData {
     randomMapDivider?: boolean;
     showMedals?: boolean;
     mapWins?: Map<GameMapType, Set<Difficulty>>;
+    /**
+     * When provided, the map picker shows an extra "Mes modèles" tab
+     * next to "Tout". Templates are managed by the parent (host-lobby
+     * modal); the picker only relays user actions.
+     */
+    templates?: LobbyTemplate[];
+    onSaveTemplate?: () => void;
+    onApplyTemplate?: (id: string) => void;
+    onDeleteTemplate?: (id: string) => void;
   };
   difficulty: {
     selected: Difficulty;
@@ -328,6 +338,10 @@ export class GameConfigSettings extends LitElement {
             .mapWins=${settings.map.mapWins ?? new Map()}
             .onSelectMap=${this.handleSelectMap}
             .onSelectRandom=${this.handleSelectRandom}
+            .templates=${settings.map.templates}
+            .onSaveTemplate=${settings.map.onSaveTemplate}
+            .onApplyTemplate=${settings.map.onApplyTemplate}
+            .onDeleteTemplate=${settings.map.onDeleteTemplate}
           ></map-picker>`,
         )}
         ${renderSection(
@@ -463,7 +477,7 @@ export class GameConfigSettings extends LitElement {
                   >
                     <fluent-slider
                       min="0"
-                      max="400"
+                      max="170"
                       step="1"
                       .value=${settings.options.nations.value}
                       .defaultValue=${settings.options.nations.defaultValue}

@@ -1224,7 +1224,13 @@ export class PlayerImpl implements Player {
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
+      case UnitType.Airport:
         return this.landBasedStructureSpawn(targetTile, validTiles);
+      case UnitType.Plane:
+        // Planes spawn directly above their source airport — no
+        // additional tile validation, the airport's tile is already
+        // owned by the player.
+        return targetTile;
       default:
         assertNever(unitType);
     }

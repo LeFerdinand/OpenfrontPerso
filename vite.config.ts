@@ -224,6 +224,9 @@ export default defineConfig(({ mode }) => {
       port: 9000,
       // Automatically open the browser when the server starts
       open: process.env.SKIP_BROWSER_OPEN !== "true",
+      // Allow access via Cloudflare quick-tunnel subdomains so the dev
+      // server can be exposed through `cloudflared tunnel --url`.
+      allowedHosts: [".trycloudflare.com"],
       proxy: {
         "/lobbies": {
           target: "ws://localhost:3000",

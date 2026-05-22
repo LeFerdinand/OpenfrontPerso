@@ -35,6 +35,7 @@ import { CoordinateGridPass } from "./passes/CoordinateGridPass";
 import { CrosshairPass } from "./passes/CrosshairPass";
 import { FalloutBloomPass } from "./passes/FalloutBloomPass";
 import { FalloutLightPass } from "./passes/FalloutLightPass";
+import { FogOfWarPass } from "./passes/FogOfWarPass";
 import { FxPass } from "./passes/fx-pass";
 import { LightmapPass } from "./passes/LightmapPass";
 import { MoveIndicatorPass } from "./passes/MoveIndicatorPass";
@@ -124,6 +125,7 @@ export class GPURenderer {
   private affiliationPalette: AffiliationPalette;
   private coordinateGridPass: CoordinateGridPass;
   private spawnOverlayPass: SpawnOverlayPass;
+  private fogOfWarPass: FogOfWarPass;
   private inSpawnPhase = false;
 
   private paletteTex: WebGLTexture;
@@ -450,6 +452,8 @@ export class GPURenderer {
       mapH,
       this.settings,
     );
+
+    this.fogOfWarPass = new FogOfWarPass(gl, mapW, mapH);
 
     for (const p of header.players) {
       if (p.team !== null) this.playerTeams.set(p.smallID, p.team);
@@ -871,6 +875,14 @@ export class GPURenderer {
     this.samRadiusPass.setVisible(visible);
   }
 
+  setFogOfWarEnabled(enabled: boolean): void {
+    this.fogOfWarPass.setEnabled(enabled);
+  }
+
+  updateFogOfWarVisibility(visibility: Uint8Array): void {
+    this.fogOfWarPass.updateVisibility(visibility);
+  }
+
   setSAMPerspective(playerID: number, allies: Set<number>): void {
     this.samRadiusPass.setLocalPlayer(playerID);
     this.samRadiusPass.setAllies(allies);
@@ -1169,6 +1181,10 @@ export class GPURenderer {
     if (pe.name && !this.gridView)
       this.namePass.draw(cam, this.nightCompositePass.getAmbient());
 
+    // Fog of war covers everything else (terrain, territory, units, names)
+    // but stays below the radial menu so the player can still interact.
+    this.fogOfWarPass.draw(cam);
+
     this.radialMenuPass.draw();
 
     gl.disable(gl.BLEND);
@@ -1210,6 +1226,7 @@ export class GPURenderer {
     this.nukeTrajectoryPass.dispose();
     this.nukeTelegraphPass.dispose();
     this.barPass.dispose();
+    this.fogOfWarPass.dispose();
     disposeGPUResources(this.gl, this.res);
     this.gl.deleteTexture(this.paletteTex);
     this.gl.deleteTexture(this.patternMetaTex);

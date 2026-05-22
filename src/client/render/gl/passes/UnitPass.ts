@@ -40,6 +40,7 @@ import {
   UT_HYDROGEN_BOMB,
   UT_MIRV,
   UT_MIRV_WARHEAD,
+  UT_PLANE,
   UT_SAM_MISSILE,
   UT_SHELL,
   UT_TRADE_SHIP,
@@ -78,9 +79,16 @@ const UNIT_ORDER = [
   "TrainEngine",
   "TrainCarriage",
   "TrainCarriageLoaded",
+  // Planes don't have a pre-baked column in unit-atlas.png — their
+  // sprite is drawn programmatically onto an extended atlas in
+  // loadAtlas() below. ATLAS_COLS auto-grows so the shader compiles
+  // with 13 columns.
+  UT_PLANE,
 ] as const;
 
 const ATLAS_COLS = UNIT_ORDER.length;
+/** Column reserved for the runtime-drawn airplane sprite. */
+const PLANE_COL = UNIT_ORDER.indexOf(UT_PLANE);
 
 // ---------------------------------------------------------------------------
 // Instance data layout
@@ -101,6 +109,8 @@ const FLAG_NORMAL = 0;
 const FLAG_FLICKER = 1;
 const FLAG_ANGRY = 2;
 const FLAG_TRADE_FRIENDLY = 3;
+/** Plane: alt-view renders as yellow if friendly to local player, pink otherwise. */
+const FLAG_PLANE = 4;
 
 /** Atlas column indices for train sub-types (resolved from trainType + loaded) */
 const TRAIN_ENGINE_COL = UNIT_ORDER.indexOf("TrainEngine");
@@ -127,6 +137,49 @@ const MISSILE_TYPES: ReadonlySet<string> = new Set([
   UT_SHELL,
   UT_MIRV_WARHEAD,
 ]);
+
+/**
+ * Draws a small top-down airplane silhouette in the given atlas cell.
+ * Pure white (255,255,255) so the shader's gray-replacement still kicks
+ * in and recolors to the player's territory color. Designed to read
+ * clearly at the 5×5 sprite scale the cell is rendered at.
+ */
+function drawPlaneSprite(
+  ctx: CanvasRenderingContext2D,
+  cellX: number,
+  cellY: number,
+  cellW: number,
+  cellH: number,
+): void {
+  const cx = cellX + cellW / 2;
+  const cy = cellY + cellH / 2;
+  const s = Math.min(cellW, cellH) * 0.42;
+  ctx.save();
+  ctx.fillStyle = "#ffffff";
+  ctx.translate(cx, cy);
+  const path = new Path2D(`
+    M 0 ${-s * 0.95}
+    Q ${s * 0.12} ${-s * 0.55} ${s * 0.12} ${-s * 0.05}
+    L ${s * 0.95} ${s * 0.25}
+    L ${s * 0.95} ${s * 0.5}
+    L ${s * 0.12} ${s * 0.3}
+    L ${s * 0.12} ${s * 0.65}
+    L ${s * 0.4} ${s * 0.85}
+    L ${s * 0.4} ${s * 0.98}
+    L 0 ${s * 0.85}
+    L ${-s * 0.4} ${s * 0.98}
+    L ${-s * 0.4} ${s * 0.85}
+    L ${-s * 0.12} ${s * 0.65}
+    L ${-s * 0.12} ${s * 0.3}
+    L ${-s * 0.95} ${s * 0.5}
+    L ${-s * 0.95} ${s * 0.25}
+    L ${-s * 0.12} ${-s * 0.05}
+    Q ${-s * 0.12} ${-s * 0.55} 0 ${-s * 0.95}
+    Z
+  `);
+  ctx.fill(path);
+  ctx.restore();
+}
 
 // ---------------------------------------------------------------------------
 // Helper: create a VAO for instanced unit rendering
@@ -155,6 +208,14 @@ function createUnitVao(
   gl.enableVertexAttribArray(2);
   gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, BYTES_PER_INSTANCE, 12);
   gl.vertexAttribDivisor(2, 1);
+
+  // Attribute 3: per-instance angle — uint8 normalized to [0,1] at
+  // offset 14, multiplied by 2π in the shader. Used by planes to
+  // orient the sprite in the direction of motion; other units leave
+  // this byte at 0 (no rotation).
+  gl.enableVertexAttribArray(3);
+  gl.vertexAttribPointer(3, 1, gl.UNSIGNED_BYTE, true, BYTES_PER_INSTANCE, 14);
+  gl.vertexAttribDivisor(3, 1);
 
   gl.bindVertexArray(null);
   return vao;
@@ -305,8 +366,27 @@ export class UnitPass {
     img.src = unitAtlasUrl;
     await img.decode();
     const gl = this.gl;
+    let source: TexImageSource = img;
+    try {
+      // Extend the on-disk 12-column atlas to ATLAS_COLS by drawing
+      // an airplane silhouette into the trailing column.
+      const origCols = 12;
+      const colW = img.naturalWidth / origCols;
+      const h = img.naturalHeight;
+      const canvas = document.createElement("canvas");
+      canvas.width = colW * ATLAS_COLS;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        drawPlaneSprite(ctx, PLANE_COL * colW, 0, colW, h);
+        source = canvas;
+      }
+    } catch (e) {
+      console.warn("UnitPass: plane atlas extension failed", e);
+    }
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   }
@@ -317,6 +397,7 @@ export class UnitPass {
     ownerID: number,
     atlasIdx: number,
     flags: number,
+    angleByte: number = 0,
   ): void {
     this.groundBuf.ensureCapacity(this.groundCount + 1);
     const off = this.groundCount * FLOATS_PER_INSTANCE;
@@ -326,6 +407,7 @@ export class UnitPass {
     const byteOff = this.groundCount * BYTES_PER_INSTANCE;
     this.groundBuf.uint8[byteOff + 12] = atlasIdx;
     this.groundBuf.uint8[byteOff + 13] = flags;
+    this.groundBuf.uint8[byteOff + 14] = angleByte;
     this.groundCount++;
   }
 
@@ -335,6 +417,7 @@ export class UnitPass {
     ownerID: number,
     atlasIdx: number,
     flags: number,
+    angleByte: number = 0,
   ): void {
     this.missileBuf.ensureCapacity(this.missileCount + 1);
     const off = this.missileCount * FLOATS_PER_INSTANCE;
@@ -344,6 +427,7 @@ export class UnitPass {
     const byteOff = this.missileCount * BYTES_PER_INSTANCE;
     this.missileBuf.uint8[byteOff + 12] = atlasIdx;
     this.missileBuf.uint8[byteOff + 13] = flags;
+    this.missileBuf.uint8[byteOff + 14] = angleByte;
     this.missileCount++;
   }
 
@@ -393,29 +477,51 @@ export class UnitPass {
         }
       }
 
-      const flags = isTradeFriendly
-        ? FLAG_TRADE_FRIENDLY
-        : isAngryWarship
-          ? FLAG_ANGRY
-          : isFlicker
-            ? FLAG_FLICKER
-            : FLAG_NORMAL;
+      const isPlane = unit.unitType === UT_PLANE;
+      const flags = isPlane
+        ? FLAG_PLANE
+        : isTradeFriendly
+          ? FLAG_TRADE_FRIENDLY
+          : isAngryWarship
+            ? FLAG_ANGRY
+            : isFlicker
+              ? FLAG_FLICKER
+              : FLAG_NORMAL;
       const isMissile = MISSILE_TYPES.has(unit.unitType);
 
       const x = unit.pos % this.mapW;
       const y = (unit.pos - x) / this.mapW;
 
+      // Per-instance rotation: planes orient their sprite "up" toward
+      // their direction of motion. atan2(dx, -dy) maps the (dx, dy)
+      // movement vector to the rotation that takes the sprite's
+      // baseline (pointing -Y) to that direction.
+      let angleByte = 0;
+      if (isPlane && unit.lastPos !== unit.pos) {
+        const lx = unit.lastPos % this.mapW;
+        const ly = (unit.lastPos - lx) / this.mapW;
+        const dx = x - lx;
+        const dy = y - ly;
+        if (dx !== 0 || dy !== 0) {
+          const theta = Math.atan2(dx, -dy); // radians
+          // Normalize to [0, 1) then quantize to a byte (256 ≈ 1.4°).
+          let n = theta / (2 * Math.PI);
+          n -= Math.floor(n);
+          angleByte = Math.round(n * 256) & 0xff;
+        }
+      }
+
       if (isMissile) {
-        this.emitMissile(x, y, unit.ownerID, atlasIdx, flags);
+        this.emitMissile(x, y, unit.ownerID, atlasIdx, flags, angleByte);
 
         // Shells emit a second instance at lastPos (2-pixel trail effect)
         if (unit.unitType === UT_SHELL && unit.lastPos !== unit.pos) {
           const lx = unit.lastPos % this.mapW;
           const ly = (unit.lastPos - lx) / this.mapW;
-          this.emitMissile(lx, ly, unit.ownerID, atlasIdx, flags);
+          this.emitMissile(lx, ly, unit.ownerID, atlasIdx, flags, angleByte);
         }
       } else {
-        this.emitGround(x, y, unit.ownerID, atlasIdx, flags);
+        this.emitGround(x, y, unit.ownerID, atlasIdx, flags, angleByte);
       }
     }
 

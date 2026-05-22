@@ -353,6 +353,13 @@ export class GameView {
   setSAMRadiusVisible(visible: boolean): void {
     this.renderer?.setSAMRadiusVisible(visible);
   }
+
+  setFogOfWarEnabled(enabled: boolean): void {
+    this.renderer?.setFogOfWarEnabled(enabled);
+  }
+  updateFogOfWarVisibility(visibility: Uint8Array): void {
+    this.renderer?.updateFogOfWarVisibility(visibility);
+  }
   setSAMPerspective(playerID: number, allies: Set<number>): void {
     this.renderer?.setSAMPerspective(playerID, allies);
   }

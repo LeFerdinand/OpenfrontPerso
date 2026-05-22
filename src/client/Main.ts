@@ -328,12 +328,12 @@ class Client {
     document.fonts.add(openFrontFont);
     openFrontFont.load().catch(() => {});
 
-    const versionElements = document.querySelectorAll(
-      "#game-version, .game-version-display",
-    );
-    if (versionElements.length === 0) {
-      console.warn("Game version element not found");
-    } else {
+    // Version label removed from the nav bars (replaced with the
+    // "La tanière" branding). The `.game-version-display` selector
+    // covers any out-of-tree consumer that still wants the real
+    // version — keep filling those if present.
+    const versionElements = document.querySelectorAll(".game-version-display");
+    if (versionElements.length > 0) {
       const trimmed = version.trim();
       const displayVersion = trimmed.startsWith("v") ? trimmed : `v${trimmed}`;
       versionElements.forEach((el) => {

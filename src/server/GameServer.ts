@@ -177,6 +177,9 @@ export class GameServer {
     if (gameConfig.waterNukes !== undefined) {
       this.gameConfig.waterNukes = gameConfig.waterNukes ?? undefined;
     }
+    if (gameConfig.fogOfWar !== undefined) {
+      this.gameConfig.fogOfWar = gameConfig.fogOfWar ?? undefined;
+    }
     this.gameConfig.hostCheats = gameConfig.hostCheats;
   }
 

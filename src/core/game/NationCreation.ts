@@ -10,7 +10,32 @@ import {
   PlayerInfo,
   PlayerType,
 } from "./Game";
+import { GameMap } from "./GameMap";
 import { AdditionalNation, Nation as ManifestNation } from "./TerrainMapLoader";
+
+/**
+ * Picks a random land tile from the map and returns it as a Cell.
+ * Falls back to `(0, 0)` after MAX_TRIES failures, but with the
+ * cap set high relative to typical map land-coverage ratios the
+ * fallback should effectively never trigger.
+ */
+function randomLandCell(
+  gameMap: GameMap,
+  random: PseudoRandom,
+): Cell | undefined {
+  const w = gameMap.width();
+  const h = gameMap.height();
+  const MAX_TRIES = 200;
+  for (let i = 0; i < MAX_TRIES; i++) {
+    const x = random.nextInt(0, w);
+    const y = random.nextInt(0, h);
+    const ref = gameMap.ref(x, y);
+    if (gameMap.isLand(ref)) {
+      return new Cell(x, y);
+    }
+  }
+  return undefined;
+}
 
 /**
  * Creates the nations array for a game.
@@ -31,6 +56,7 @@ export function createNationsForGame(
   additionalNations: AdditionalNation[],
   numHumans: number,
   random: PseudoRandom,
+  gameMap: GameMap,
 ): Nation[] {
   const toNation = (n: ManifestNation): Nation =>
     new Nation(
@@ -56,6 +82,7 @@ export function createNationsForGame(
       additionalNations,
       toNation,
       random,
+      gameMap,
     );
   }
 
@@ -68,6 +95,7 @@ export function createNationsForGame(
         additionalNations,
         toNation,
         random,
+        gameMap,
       );
     }
 
@@ -98,6 +126,7 @@ function createRandomNations(
   additionalNations: AdditionalNation[],
   toNation: (n: ManifestNation) => Nation,
   random: PseudoRandom,
+  gameMap: GameMap,
 ): Nation[] {
   const shuffled = random.shuffleArray(manifestNations);
   if (targetCount <= manifestNations.length) {
@@ -112,10 +141,15 @@ function createRandomNations(
     const shuffledExtras = random.shuffleArray(candidates);
     const picked = shuffledExtras.slice(0, remaining);
     for (const extra of picked) {
+      // Prefer the manifest-supplied coordinates when available;
+      // otherwise pick a random land tile so the nation has a real
+      // spawn anchor (NationExecution falls back to a free
+      // `SpawnExecution` for `undefined` cells, which gets fragile
+      // when many nations race for tiles).
       const spawnCell =
         extra.coordinates !== undefined
           ? new Cell(extra.coordinates[0], extra.coordinates[1])
-          : undefined;
+          : randomLandCell(gameMap, random);
       nations.push(
         new Nation(
           spawnCell,
@@ -132,7 +166,7 @@ function createRandomNations(
     usedNames.add(name);
     nations.push(
       new Nation(
-        undefined,
+        randomLandCell(gameMap, random),
         new PlayerInfo(name, PlayerType.Nation, null, random.nextID()),
       ),
     );

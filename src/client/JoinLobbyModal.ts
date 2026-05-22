@@ -534,6 +534,13 @@ export class JoinLobbyModal extends BaseModal {
           .value=${translateText("common.enabled")}
         ></lobby-config-item>`,
       );
+    if (c.fogOfWar)
+      cards.push(
+        html`<lobby-config-item
+          .label=${translateText("public_game_modifier.fog_of_war_label")}
+          .value=${translateText("common.enabled")}
+        ></lobby-config-item>`,
+      );
     if ((isTeam && !c.donateGold) || (!isTeam && c.donateGold))
       cards.push(
         html`<lobby-config-item

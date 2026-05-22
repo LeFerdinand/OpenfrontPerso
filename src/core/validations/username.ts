@@ -1,9 +1,9 @@
 import { translateText } from "../../client/Utils";
 import { ClanTagSchema, UsernameSchema } from "../Schemas";
 
-export const MIN_USERNAME_LENGTH = 3;
+export const MIN_USERNAME_LENGTH = 1;
 export const MAX_USERNAME_LENGTH = 27;
-export const MIN_CLAN_TAG_LENGTH = 2;
+export const MIN_CLAN_TAG_LENGTH = 1;
 export const MAX_CLAN_TAG_LENGTH = 5;
 
 export function validateUsername(username: string): {

@@ -6,6 +6,7 @@ import {
   GameType,
   Nation,
 } from "../src/core/game/Game";
+import { GameMap } from "../src/core/game/GameMap";
 import { createNationsForGame } from "../src/core/game/NationCreation";
 import {
   AdditionalNation,
@@ -13,6 +14,20 @@ import {
 } from "../src/core/game/TerrainMapLoader";
 import { PseudoRandom } from "../src/core/PseudoRandom";
 import { GameConfig, GameStartInfo } from "../src/core/Schemas";
+
+/**
+ * Minimal stub for the bits of GameMap createNationsForGame touches.
+ * The procedural-nation path needs `width/height/ref/isLand` to assign
+ * random land cells; everything else can throw if accidentally called.
+ */
+function stubGameMap(): GameMap {
+  return {
+    width: () => 100,
+    height: () => 100,
+    ref: (x: number, y: number) => y * 100 + x,
+    isLand: () => true,
+  } as unknown as GameMap;
+}
 
 function makeManifestNations(count: number): ManifestNation[] {
   const result: ManifestNation[] = [];
@@ -70,6 +85,7 @@ describe("createNationsForGame: additionalNations pool", () => {
       extras,
       0,
       random,
+      stubGameMap(),
     );
 
     expect(nations).toHaveLength(3);
@@ -95,6 +111,7 @@ describe("createNationsForGame: additionalNations pool", () => {
       extras,
       0,
       random,
+      stubGameMap(),
     );
 
     expect(nations).toHaveLength(5);
@@ -132,6 +149,7 @@ describe("createNationsForGame: additionalNations pool", () => {
         extras,
         0,
         random,
+        stubGameMap(),
       );
       expect(nations).toHaveLength(4);
 
@@ -158,6 +176,7 @@ describe("createNationsForGame: additionalNations pool", () => {
       extras,
       0,
       random,
+      stubGameMap(),
     );
 
     expect(nations).toHaveLength(5);
@@ -184,6 +203,7 @@ describe("createNationsForGame: additionalNations pool", () => {
       [],
       0,
       random,
+      stubGameMap(),
     );
 
     expect(nations).toHaveLength(4);
@@ -207,6 +227,7 @@ describe("createNationsForGame: additionalNations pool", () => {
       extras,
       0,
       random,
+      stubGameMap(),
     );
 
     const names = nationNames(nations);
@@ -229,6 +250,7 @@ describe("createNationsForGame: additionalNations pool", () => {
       extras,
       0,
       random,
+      stubGameMap(),
     );
 
     const withCoords = nations.find((n) => n.playerInfo.name === "WithCoords");
@@ -240,7 +262,11 @@ describe("createNationsForGame: additionalNations pool", () => {
     expect(withoutCoords).toBeDefined();
     expect(withCoords!.spawnCell?.x).toBe(42);
     expect(withCoords!.spawnCell?.y).toBe(99);
-    expect(withoutCoords!.spawnCell).toBeUndefined();
+    // Additional nations without coordinates now get a random
+    // land-cell from the GameMap so NationExecution always has a real
+    // anchor (previously `undefined` → SpawnExecution random, which is
+    // fragile when many nations race for tiles).
+    expect(withoutCoords!.spawnCell).toBeDefined();
   });
 
   test("produces unique nation names overall", () => {
@@ -254,6 +280,7 @@ describe("createNationsForGame: additionalNations pool", () => {
       extras,
       0,
       random,
+      stubGameMap(),
     );
 
     const names = nationNames(nations);

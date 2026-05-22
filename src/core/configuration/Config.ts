@@ -187,6 +187,9 @@ export class Config {
   isRandomSpawn(): boolean {
     return this._gameConfig.randomSpawn;
   }
+  fogOfWar(): boolean {
+    return this._gameConfig.fogOfWar ?? false;
+  }
   infiniteGold(): boolean {
     return this._gameConfig.infiniteGold;
   }
@@ -273,6 +276,24 @@ export class Config {
     return Math.floor((100 * rejectionModifier) / baseSpawnRate);
   }
 
+  /**
+   * Gold awarded when a plane reaches its destination airport.
+   * ~40% more than the equivalent trade-ship route — airports cost
+   * ~50% more, so the gold premium keeps the ROI competitive.
+   */
+  planeGold(dist: number, player: Player | PlayerView): Gold {
+    const base = this.tradeShipGold(dist, player);
+    return (base * 14n) / 10n;
+  }
+
+  /** Same shape as trade-ship spawn rate; planes are slightly rarer. */
+  planeSpawnRate(planeSpawnRejections: number, numPlanes: number): number {
+    const decayRate = Math.LN2 / 50;
+    const baseSpawnRate = 1 - sigmoid(numPlanes, decayRate, 200);
+    const rejectionModifier = 1 / (planeSpawnRejections + 1);
+    return Math.floor((120 * rejectionModifier) / baseSpawnRate);
+  }
+
   unitInfo(type: UnitType): UnitInfo {
     const cached = this.unitInfoCache.get(type);
     if (cached !== undefined) {
@@ -316,6 +337,24 @@ export class Config {
           ),
           constructionDuration: this.instantBuild() ? 0 : 5 * 10,
           upgradable: true,
+        };
+        break;
+      case UnitType.Airport:
+        info = {
+          cost: this.costWrapper(
+            // ~1.5x the port cost curve (port: cap 1M, x2 per level from 125k).
+            // Same shape, scaled up so airports stay distinctly more expensive.
+            (numUnits: number) =>
+              Math.min(1_500_000, Math.pow(2, numUnits) * 190_000),
+            UnitType.Airport,
+          ),
+          constructionDuration: this.instantBuild() ? 0 : 5 * 10,
+          upgradable: true,
+        };
+        break;
+      case UnitType.Plane:
+        info = {
+          cost: () => 0n,
         };
         break;
       case UnitType.AtomBomb:
@@ -551,7 +590,8 @@ export class Config {
     if (this.isRandomSpawn()) {
       return 150;
     }
-    return 300;
+    // Manual-spawn MP: 200 ticks = 20s at 10Hz to pick a starting location.
+    return 200;
   }
   numBots(): number {
     return this.bots();

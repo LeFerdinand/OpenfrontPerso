@@ -4,12 +4,14 @@ import { assetUrl } from "../core/AssetUrls";
 import { decodePatternData } from "../core/PatternDecoder";
 import { PlayerType } from "../core/game/Game";
 import { GameView } from "../core/game/GameView";
+import { FogOfWarVisibility } from "./FogOfWarVisibility";
 import { uploadFrameData } from "./render/frame/Upload";
 import {
   PlayerStatic,
   SpawnCenter,
   GameView as WebGLGameView,
 } from "./render/gl";
+import { STRUCTURE_TYPES, type UnitState } from "./render/types";
 
 const PALETTE_SIZE = 4096;
 
@@ -36,6 +38,9 @@ export class WebGLFrameBuilder {
   private localPlayerSmallID = 0;
   // Scratch buffer for terrain-delta uploads (parallel to the refs list).
   private terrainDeltaBytes: Uint8Array = new Uint8Array(0);
+  // Lazily allocated on the first tick the fogOfWar config flag is on.
+  private fogVisibility: FogOfWarVisibility | null = null;
+  private fogEnabledSent = false;
 
   constructor(private readonly view: WebGLGameView) {
     this.palette = new Float32Array(PALETTE_SIZE * 2 * 4);
@@ -47,6 +52,7 @@ export class WebGLFrameBuilder {
   clearCaches(): void {
     this.knownSmallIDs.clear();
     this.localPlayerSmallID = 0;
+    this.fogEnabledSent = false;
   }
 
   update(gameView: GameView): void {
@@ -54,7 +60,85 @@ export class WebGLFrameBuilder {
     this.syncLocalPlayer(gameView);
     this.syncSpawnOverlay(gameView);
     this.syncTerrainDeltas(gameView);
-    uploadFrameData(this.view, gameView.frameData());
+    const fog = this.syncFogOfWar(gameView);
+    if (fog === null) {
+      uploadFrameData(this.view, gameView.frameData());
+    } else {
+      // Only mobile units (warships, transports, nukes…) are filtered;
+      // structures and names are kept live. So we don't need to force
+      // the structures upload — the upstream path already handles them
+      // through `frame.structuresDirty` like in fog-off mode.
+      uploadFrameData(this.view, gameView.frameData(), {
+        unitsOverride: fog.units,
+      });
+    }
+  }
+
+  /**
+   * Returns null when fog isn't engaged this tick. Otherwise returns
+   * the filtered units map.
+   *
+   * Filtering policy (the "playable fog" compromise — strict filtering
+   * made the game unwinnable against hard bots):
+   *   • Structures (cities, ports, factories, silos, SAMs, defense
+   *     posts) are ALWAYS rendered. Scouted-once info the player needs
+   *     to anticipate threats.
+   *   • Player names + troop counts are ALWAYS rendered (we no longer
+   *     pass a namesOverride).
+   *   • Mobile units (warships, transports, MIRVs, missiles) are
+   *     hidden when their tile isn't currently visible — that's the
+   *     real tactical intel the fog protects.
+   *
+   * Side effect: we no longer need `forceStructuresUpload`, which used
+   * to re-push every structure on every tick — by far the heaviest
+   * per-tick cost when many bots are alive.
+   */
+  private syncFogOfWar(gameView: GameView): {
+    units: ReadonlyMap<number, UnitState>;
+  } | null {
+    const enabled = gameView.config().fogOfWar();
+    if (!enabled) {
+      if (this.fogEnabledSent) {
+        this.view.setFogOfWarEnabled(false);
+        this.fogEnabledSent = false;
+      }
+      return null;
+    }
+    if (!this.fogEnabledSent) {
+      this.view.setFogOfWarEnabled(true);
+      this.fogEnabledSent = true;
+    }
+    this.fogVisibility ??= new FogOfWarVisibility(
+      gameView.width(),
+      gameView.height(),
+    );
+    const vis = this.fogVisibility.compute(gameView);
+    this.view.updateFogOfWarVisibility(vis);
+
+    // Pre-spawn / no-territory: visibility is all 255 — nothing to filter.
+    const me = gameView.myPlayer();
+    if (
+      gameView.inSpawnPhase() ||
+      me === null ||
+      me.numTilesOwned() === 0
+    ) {
+      return null;
+    }
+
+    const mySmallID = me.smallID();
+    const frame = gameView.frameData();
+    const filteredUnits = new Map<number, UnitState>();
+    for (const [id, unit] of frame.units) {
+      if (
+        unit.ownerID === mySmallID ||
+        STRUCTURE_TYPES.has(unit.unitType) ||
+        vis[unit.pos] === 255
+      ) {
+        filteredUnits.set(id, unit);
+      }
+    }
+
+    return { units: filteredUnits };
   }
 
   /**

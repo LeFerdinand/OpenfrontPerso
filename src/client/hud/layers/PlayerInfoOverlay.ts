@@ -13,6 +13,7 @@ import { TileRef } from "../../../core/game/GameMap";
 import { AllianceView } from "../../../core/game/GameUpdates";
 import { GameView, PlayerView, UnitView } from "../../../core/game/GameView";
 import { Controller } from "../../Controller";
+import { isTileVisibleToLocalPlayer } from "../../FogOfWarVisibility";
 import {
   ContextMenuEvent,
   MouseMoveEvent,
@@ -146,6 +147,9 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
     const tile = this.game.ref(worldCoord.x, worldCoord.y);
     if (!tile) return;
 
+    // Fog of war: don't reveal hovered enemy info if the tile is hidden.
+    if (!isTileVisibleToLocalPlayer(this.game, tile)) return;
+
     const owner = this.game.owner(tile);
 
     if (owner && owner.isPlayer()) {
@@ -157,7 +161,12 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
     } else if (!this.game.isLand(tile)) {
       const units = this.game
         .units(UnitType.Warship, UnitType.TradeShip, UnitType.TransportShip)
-        .filter((u) => euclideanDistWorld(worldCoord, u.tile(), this.game) < 50)
+        .filter(
+          (u) =>
+            euclideanDistWorld(worldCoord, u.tile(), this.game) < 50 &&
+            (u.owner().smallID() === this.game.myPlayer()?.smallID() ||
+              isTileVisibleToLocalPlayer(this.game, u.tile())),
+        )
         .sort(distSortUnitWorld(worldCoord, this.game));
 
       if (units.length > 0) {

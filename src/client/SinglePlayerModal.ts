@@ -484,7 +484,7 @@ export class SinglePlayerModal extends BaseModal {
       case "single_modal.random_spawn":
         this.randomSpawn = checked;
         break;
-        case "single_modal.fog_of_war":
+      case "single_modal.fog_of_war":
         this.fogOfWar = checked;
         break;
       case "single_modal.infinite_gold":
@@ -529,7 +529,7 @@ export class SinglePlayerModal extends BaseModal {
   private handleNationsChange = (e: Event) => {
     const customEvent = e as CustomEvent<{ value: number }>;
     const value = customEvent.detail.value;
-    if (isNaN(value) || value < 0 || value > 400) {
+    if (isNaN(value) || value < 0 || value > 170) {
       return;
     }
     this.nations = value;
@@ -691,6 +691,7 @@ export class SinglePlayerModal extends BaseModal {
               infiniteTroops: this.infiniteTroops,
               instantBuild: this.instantBuild,
               randomSpawn: this.randomSpawn,
+              fogOfWar: this.fogOfWar,
               disabledUnits: this.disabledUnits
                 .map((u) => Object.values(UnitType).find((ut) => ut === u))
                 .filter((ut): ut is UnitType => ut !== undefined),
@@ -729,10 +730,13 @@ export class SinglePlayerModal extends BaseModal {
       const manifest = await mapData.manifest();
       // Only update if the map hasn't changed
       if (this.selectedMap === currentMap) {
-        this.defaultNationCount = manifest.nations.length;
+        // Cap at 170 — the UI slider tops out there to keep spawn
+        // contention manageable, so the default must respect it too.
+        const maxNations = Math.min(170, manifest.nations.length);
+        this.defaultNationCount = maxNations;
         this.nations = this.compactMap
-          ? Math.max(0, Math.floor(manifest.nations.length * 0.25))
-          : manifest.nations.length;
+          ? Math.max(0, Math.floor(maxNations * 0.25))
+          : maxNations;
       }
     } catch (error) {
       console.warn("Failed to load nation count", error);

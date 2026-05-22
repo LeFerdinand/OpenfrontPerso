@@ -1,7 +1,6 @@
 import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../core/AssetUrls";
-import "./NewsBox";
 
 @customElement("play-page")
 export class PlayPage extends LitElement {
@@ -13,7 +12,7 @@ export class PlayPage extends LitElement {
     return html`
       <div
         id="page-play"
-        class="flex flex-col gap-2 w-full px-0 lg:px-4 min-h-0"
+        class="flex flex-col flex-1 justify-center items-center gap-2 w-full px-0 lg:px-4 min-h-0"
       >
         <token-login class="absolute"></token-login>
 
@@ -66,24 +65,25 @@ export class PlayPage extends LitElement {
           </div>
         </div>
 
-        <div
-          class="w-full pb-4 lg:pb-0 flex flex-col gap-4 sm:-mx-4 sm:w-[calc(100%+2rem)] lg:mx-0 lg:w-full lg:grid lg:grid-cols-[2fr_1fr] lg:gap-4"
-        >
+        <!-- Centered content group, scaled ~+50% to fill more of the
+             empty homepage canvas. Inner layout (username/skin/flag
+             row + mode selector) preserved as-is, only sizes change. -->
+        <div class="w-full max-w-5xl flex flex-col gap-3">
+          <div
+            class="w-full pb-4 lg:pb-0 flex flex-col gap-4 sm:-mx-4 sm:w-[calc(100%+2rem)] lg:mx-0 lg:w-full lg:grid lg:grid-cols-[2fr_1fr] lg:gap-6"
+          >
           <!-- Mobile: spacer for fixed top bar -->
           <div
             class="lg:hidden h-[calc(env(safe-area-inset-top)+56px)] lg:col-span-2 -mb-4"
           ></div>
 
-          <!-- News box above username -->
-          <news-box class="lg:col-span-2"></news-box>
-
           <!-- Username: left col -->
           <div
-            class="px-2 py-2 bg-surface border-y border-white/10 overflow-visible lg:flex lg:items-center lg:gap-x-2 lg:h-[60px] lg:p-3 lg:relative lg:z-20 lg:border-y-0 lg:rounded-xl"
+            class="px-2 py-2 bg-surface border-y border-white/10 overflow-visible lg:flex lg:items-center lg:gap-x-2 lg:h-[90px] lg:p-3 lg:relative lg:z-20 lg:border-y-0 lg:rounded-xl"
           >
             <div class="flex items-center gap-2 min-w-0 w-full">
               <username-input
-                class="flex-1 min-w-0 h-10 lg:h-[50px]"
+                class="flex-1 min-w-0 h-14 lg:h-[75px]"
               ></username-input>
               <pattern-input
                 id="pattern-input-mobile"
@@ -94,13 +94,13 @@ export class PlayPage extends LitElement {
               <flag-input
                 id="flag-input-mobile"
                 show-select-label
-                class="shrink-0 lg:hidden h-10 w-10"
+                class="shrink-0 lg:hidden h-14 w-14"
               ></flag-input>
             </div>
           </div>
 
           <!-- Skin + flag: right col -->
-          <div class="hidden lg:flex h-[60px] gap-2">
+          <div class="hidden lg:flex h-[90px] gap-3">
             <pattern-input
               id="pattern-input-desktop"
               show-select-label
@@ -112,9 +112,10 @@ export class PlayPage extends LitElement {
               class="flex-1 h-full"
             ></flag-input>
           </div>
-        </div>
+          </div>
 
-        <game-mode-selector></game-mode-selector>
+          <game-mode-selector></game-mode-selector>
+        </div>
       </div>
     `;
   }

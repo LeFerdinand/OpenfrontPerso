@@ -302,6 +302,18 @@ export class UserSettings {
     this.removeCached(FLAG_KEY, emitChange);
   }
 
+  getSelectedColor(): string | null {
+    return this.getCached(COLOR_KEY);
+  }
+
+  setSelectedColor(hex: string | null): void {
+    if (hex === null) {
+      this.removeCached(COLOR_KEY);
+    } else {
+      this.setCached(COLOR_KEY, hex);
+    }
+  }
+
   backgroundMusicVolume(): number {
     return this.getFloat("settings.backgroundMusicVolume", 0);
   }
