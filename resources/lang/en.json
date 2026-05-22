@@ -195,6 +195,7 @@
   },
   "single_modal": {
     "random_spawn": "Random spawn",
+    "fog_of_war": "Brouillard de guerre",
     "toggle_achievements": "Toggle achievements",
     "sign_in_for_achievements": "Sign in for achievements",
     "options_title": "Options",
