@@ -282,7 +282,11 @@ export class UserSettings {
     let flag = this.getCached(FLAG_KEY);
     if (!flag) return null;
     // Migrate bare country codes to country: prefix
-    if (!flag.startsWith("flag:") && !flag.startsWith("country:")) {
+    if (
+      !flag.startsWith("flag:") &&
+      !flag.startsWith("country:") &&
+      !flag.startsWith("custom:")
+    ) {
       flag = `country:${flag}`;
       // Silent migration: don't emit change event for FlagInput
       this.setCached(FLAG_KEY, flag, false);

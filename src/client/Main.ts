@@ -24,6 +24,8 @@ import "./ClanModal";
 import { joinLobby, type JoinLobbyResult } from "./ClientGameRunner";
 import { getPlayerCosmeticsRefs } from "./Cosmetics";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
+import "./FlagEditorModal";
+import { FlagEditorModal } from "./FlagEditorModal";
 import "./FlagInput";
 import { FlagInput } from "./FlagInput";
 import "./FlagInputModal";
@@ -312,6 +314,7 @@ class Client {
       tag: "territory-patterns-modal",
     });
     modalRouter.register("flag-input", { tag: "flag-input-modal" });
+    modalRouter.register("flag-editor", { tag: "flag-editor-modal" });
 
     // Prefetch turnstile token so it is available when
     // the user joins a lobby.
@@ -403,6 +406,8 @@ class Client {
       });
     }
 
+    // Old country/cosmetic picker — kept registered so it can be reopened
+    // programmatically, but the flag button now opens the new pixel editor.
     const flagInputModal = document.querySelector(
       "flag-input-modal",
     ) as FlagInputModal;
@@ -410,11 +415,18 @@ class Client {
       console.warn("Flag input modal element not found");
     }
 
+    const flagEditorModal = document.querySelector(
+      "flag-editor-modal",
+    ) as FlagEditorModal;
+    if (!flagEditorModal || !(flagEditorModal instanceof FlagEditorModal)) {
+      console.warn("Flag editor modal element not found");
+    }
+
     // Attach listener to any flag-input component (desktop or potentially others)
     document.querySelectorAll("flag-input").forEach((flagInput) => {
       flagInput.addEventListener("flag-input-click", () => {
-        if (flagInputModal && flagInputModal instanceof FlagInputModal) {
-          flagInputModal.open();
+        if (flagEditorModal && flagEditorModal instanceof FlagEditorModal) {
+          flagEditorModal.open();
         }
       });
     });

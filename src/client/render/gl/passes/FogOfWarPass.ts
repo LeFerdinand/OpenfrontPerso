@@ -37,7 +37,7 @@ export class FogOfWarPass {
 
   private enabled = false;
   /** Darkness of never-explored areas (0 = no fog, 1 = pitch black). */
-  private fogDarkAlpha = 0.95;
+  private fogDarkAlpha = 1.0;
   /** Darkness of explored-but-not-visible "memory" areas. */
   private fogGreyAlpha = 0.45;
 

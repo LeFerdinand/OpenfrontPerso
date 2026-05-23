@@ -67,7 +67,7 @@ export class FlagInput extends LitElement {
     const isDefaultFlag = this.isDefaultFlagValue(this.flag);
     const showSelect = this.showSelectLabel && isDefaultFlag;
     const buttonTitle = showSelect
-      ? translateText("flag_input.title")
+      ? translateText("flag_input.create")
       : translateText("flag_input.button_title");
 
     return html`
@@ -85,7 +85,7 @@ export class FlagInput extends LitElement {
           ? html`<span
               class="text-[7px] lg:text-[10px] font-black tracking-wider text-white uppercase leading-tight lg:leading-none w-full text-center px-0.5 lg:px-1"
             >
-              ${translateText("flag_input.title")}
+              ${translateText("flag_input.create")}
             </span>`
           : null}
       </button>

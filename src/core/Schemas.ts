@@ -522,16 +522,26 @@ export const TurnSchema = z.object({
   hash: z.number().nullable().optional(),
 });
 
+// Max length sized to fit a custom 48x17 PNG encoded as a base64 data URL.
+// A solid-color 48x17 PNG is ~150 bytes; complex flags max out ~3KB. We allow
+// 8KB to give comfortable headroom for future grid sizes.
+const FLAG_NAME_MAX = 8192;
+
 export const FlagName = z
   .string()
-  .max(128)
+  .max(FLAG_NAME_MAX)
   .refine(
     (val) => {
       if (val === undefined || val === "") return true;
-      return val.startsWith("flag:") || val.startsWith("country:");
+      return (
+        val.startsWith("flag:") ||
+        val.startsWith("country:") ||
+        val.startsWith("custom:")
+      );
     },
     {
-      message: "Invalid flag: must start with country: or flag:",
+      message:
+        "Invalid flag: must start with country:, flag:, or custom:",
     },
   );
 

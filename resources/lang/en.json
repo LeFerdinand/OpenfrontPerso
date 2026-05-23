@@ -1180,8 +1180,19 @@
   },
   "flag_input": {
     "title": "Select Flag",
+    "create": "Créer un drapeau",
     "button_title": "Pick a flag!",
     "search_flag": "Search..."
+  },
+  "flag_editor": {
+    "title": "Créer un drapeau",
+    "pencil": "Crayon",
+    "fill": "Remplir",
+    "eraser": "Gomme",
+    "clear": "Tout effacer",
+    "custom_color": "Couleur personnalisée",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
   },
   "radial_menu": {
     "delete_unit_title": "Delete Unit",

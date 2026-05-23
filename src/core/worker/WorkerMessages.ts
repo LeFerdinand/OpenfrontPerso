@@ -1,3 +1,4 @@
+import type { AssetManifest } from "../AssetUrls";
 import {
   BuildableUnit,
   PlayerActions,
@@ -42,6 +43,12 @@ export interface InitMessage extends BaseWorkerMessage {
   gameStartInfo: GameStartInfo;
   clientID: ClientID | undefined;
   cdnBase: string;
+  /**
+   * Asset URL hashed-path manifest passed explicitly so the worker bundle
+   * works even when the Vite `define:` substitution for __ASSET_MANIFEST__
+   * doesn't reach the inlined `?worker&inline` chunk in production builds.
+   */
+  assetManifest: AssetManifest;
 }
 
 export interface TurnMessage extends BaseWorkerMessage {

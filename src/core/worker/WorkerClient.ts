@@ -1,4 +1,4 @@
-import { getCdnBase } from "../AssetUrls";
+import { getAssetManifest, getCdnBase } from "../AssetUrls";
 import {
   BuildableUnit,
   Cell,
@@ -89,7 +89,12 @@ export class WorkerClient {
         id: messageId,
         gameStartInfo: this.gameStartInfo,
         clientID: this.clientID,
-        cdnBase: getCdnBase(),
+        // Fall back to page origin so the worker can resolve relative
+        // asset URLs — a blob: worker has no document base for fetch().
+        cdnBase: getCdnBase() || self.location.origin,
+        // Send the manifest explicitly: Vite's __ASSET_MANIFEST__ define
+        // doesn't reach the inlined worker bundle in production builds.
+        assetManifest: getAssetManifest(),
       });
 
       setTimeout(() => {

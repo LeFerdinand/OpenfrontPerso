@@ -197,6 +197,11 @@ export async function resolveFlagUrl(
     const code = flagRef.slice("country:".length);
     return assetUrl(`flags/${code}.svg`);
   }
+  if (flagRef.startsWith("custom:")) {
+    // Player-drawn flag — the data URL is embedded straight in the ref so
+    // peer clients can render it without a server-side asset lookup.
+    return flagRef.slice("custom:".length);
+  }
   return undefined;
 }
 
