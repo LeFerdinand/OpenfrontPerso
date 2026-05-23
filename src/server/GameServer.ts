@@ -180,6 +180,9 @@ export class GameServer {
     if (gameConfig.fogOfWar !== undefined) {
       this.gameConfig.fogOfWar = gameConfig.fogOfWar ?? undefined;
     }
+    if (gameConfig.weather !== undefined) {
+      this.gameConfig.weather = gameConfig.weather ?? undefined;
+    }
     this.gameConfig.hostCheats = gameConfig.hostCheats;
   }
 

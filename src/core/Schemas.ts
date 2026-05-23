@@ -31,6 +31,7 @@ export type Intent =
   | AttackIntent
   | CancelAttackIntent
   | BoatAttackIntent
+  | PlaneAttackIntent
   | CancelBoatIntent
   | AllianceRequestIntent
   | AllianceRejectIntent
@@ -57,6 +58,7 @@ export type AttackIntent = z.infer<typeof AttackIntentSchema>;
 export type CancelAttackIntent = z.infer<typeof CancelAttackIntentSchema>;
 export type SpawnIntent = z.infer<typeof SpawnIntentSchema>;
 export type BoatAttackIntent = z.infer<typeof BoatAttackIntentSchema>;
+export type PlaneAttackIntent = z.infer<typeof PlaneAttackIntentSchema>;
 export type EmbargoAllIntent = z.infer<typeof EmbargoAllIntentSchema>;
 export type CancelBoatIntent = z.infer<typeof CancelBoatIntentSchema>;
 export type AllianceRequestIntent = z.infer<typeof AllianceRequestIntentSchema>;
@@ -258,6 +260,7 @@ export const GameConfigSchema = z.object({
   waterNukes: z.boolean().nullable().optional(),
   randomSpawn: z.boolean(),
   fogOfWar: z.boolean().nullable().optional(),
+  weather: z.boolean().nullable().optional(),
   maxPlayers: z.number().optional(),
   maxTimerValue: z.number().int().min(1).max(120).nullable().optional(), // In minutes
   spawnImmunityDuration: z.number().int().min(0).nullable().optional(), // In ticks
@@ -345,6 +348,17 @@ export const SpawnIntentSchema = z.object({
 
 export const BoatAttackIntentSchema = z.object({
   type: z.literal("boat"),
+  troops: z.number().nonnegative(),
+  dst: z.number(),
+});
+
+/**
+ * Plane attack intent — sends up to 3 colon planes from the player's closest
+ * airport to a destination tile. The execution decides plane count (gold +
+ * existing colon planes cap) and per-plane troop allocation.
+ */
+export const PlaneAttackIntentSchema = z.object({
+  type: z.literal("planeAttack"),
   troops: z.number().nonnegative(),
   dst: z.number(),
 });
@@ -470,6 +484,7 @@ const IntentSchema = z.discriminatedUnion("type", [
   SpawnIntentSchema,
   MarkDisconnectedIntentSchema,
   BoatAttackIntentSchema,
+  PlaneAttackIntentSchema,
   CancelBoatIntentSchema,
   AllianceRequestIntentSchema,
   AllianceRejectIntentSchema,

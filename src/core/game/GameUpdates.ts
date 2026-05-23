@@ -69,6 +69,20 @@ export enum GameUpdateType {
   SpawnPhaseEnd,
   GamePaused,
   DonateEvent,
+  WeatherEvent,
+}
+
+export type WeatherKind = "fog" | "earthquake" | "cyclone";
+export interface WeatherEventUpdate {
+  type: GameUpdateType.WeatherEvent;
+  kind: WeatherKind;
+  /** Stable id so the renderer can animate per-event continuously. */
+  id: number;
+  x: number;
+  y: number;
+  radius: number;
+  /** 0..1 fraction of lifetime remaining (1 = just spawned, 0 = expiring). */
+  remaining: number;
 }
 
 export type GameUpdate =
@@ -94,7 +108,8 @@ export type GameUpdate =
   | EmbargoUpdate
   | SpawnPhaseEndUpdate
   | GamePausedUpdate
-  | DonateEventUpdate;
+  | DonateEventUpdate
+  | WeatherEventUpdate;
 
 export interface BonusEventUpdate {
   type: GameUpdateType.BonusEvent;
@@ -274,6 +289,8 @@ export interface DisplayMessageUpdate {
   params?: Record<string, string | number>;
   unitID?: number;
   focusPlayerID?: number;
+  /** TileRef to pan the camera to when the player clicks the message. */
+  focusTile?: TileRef;
 }
 
 export type DisplayChatMessageUpdate = {

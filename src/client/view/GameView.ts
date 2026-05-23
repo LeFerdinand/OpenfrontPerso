@@ -44,6 +44,7 @@ const TRAIL_TYPES: ReadonlySet<UnitType> = new Set<UnitType>([
   UnitType.HydrogenBomb,
   UnitType.MIRV,
   UnitType.MIRVWarhead,
+  UnitType.AttackPlane,
 ]);
 
 type TrainPlanState = {
@@ -197,6 +198,7 @@ export class GameView implements GameMap {
       allianceClusters: new Map(),
       nukeTelegraphs: [],
       attackRings: [],
+      weatherEvents: [],
       structuresDirty: false,
       tileMode: "live",
     };
@@ -495,6 +497,19 @@ export class GameView implements GameMap {
       this._map.width(),
     );
     f.attackRings = extractAttackRings(this._unitStates, this._map.width());
+    // Weather events are emitted by WeatherExecution every tick. Map
+    // them straight through — the WeatherPass on the GPU side just
+    // needs (kind, x, y, radius, remaining).
+    f.weatherEvents = (
+      gu.updates[GameUpdateType.WeatherEvent] ?? []
+    ).map((w) => ({
+      id: w.id,
+      kind: w.kind,
+      x: w.x,
+      y: w.y,
+      radius: w.radius,
+      remaining: w.remaining,
+    }));
     f.structuresDirty = this._structuresDirty;
 
     // First populate: signal "full upload required" by nulling changedTiles.

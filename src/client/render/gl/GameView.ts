@@ -23,6 +23,7 @@ import type {
   RendererConfig,
   TilePair,
   UnitState,
+  WeatherEventState,
 } from "../types";
 import type {
   GameViewEventMap,
@@ -324,6 +325,11 @@ export class GameView {
   /** Update in-flight nuke target telegraph circles. */
   updateNukeTelegraphs(data: NukeTelegraphData[]): void {
     this.renderer?.updateNukeTelegraphs(data);
+  }
+
+  /** Update visible weather event overlays. */
+  updateWeatherEvents(events: readonly WeatherEventState[]): void {
+    this.renderer?.updateWeatherEvents(events);
   }
 
   /** Update spawn phase overlay (tile highlights + breathing rings). */

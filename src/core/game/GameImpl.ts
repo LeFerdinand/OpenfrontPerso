@@ -928,6 +928,7 @@ export class GameImpl implements Game {
     params?: Record<string, string | number>,
     unitID?: number,
     focusPlayerID?: PlayerID,
+    focusTile?: TileRef,
   ): void {
     let id: number | null = null;
     if (playerID !== null) {
@@ -946,6 +947,7 @@ export class GameImpl implements Game {
       params: params,
       unitID: unitID,
       focusPlayerID: focusID,
+      focusTile: focusTile,
     });
   }
 

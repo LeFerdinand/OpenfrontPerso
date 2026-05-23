@@ -17,6 +17,8 @@ export type {
   RendererConfig,
   TilePair,
   UnitState,
+  WeatherEventState,
+  WeatherKind,
 } from "./Renderer";
 
 // Frame data — boundary contract between game integration and features
@@ -91,6 +93,7 @@ export {
   STRUCTURE_TYPES,
   UT_AIRPORT,
   UT_ATOM_BOMB,
+  UT_ATTACK_PLANE,
   UT_CITY,
   UT_DEFENSE_POST,
   UT_FACTORY,

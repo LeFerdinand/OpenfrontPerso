@@ -31,6 +31,7 @@ export const UT_SAM_LAUNCHER = "SAM Launcher" as const;
 export const UT_MISSILE_SILO = "Missile Silo" as const;
 export const UT_AIRPORT = "Airport" as const;
 export const UT_PLANE = "Plane" as const;
+export const UT_ATTACK_PLANE = "AttackPlane" as const;
 
 // ---------------------------------------------------------------------------
 // Derived sets

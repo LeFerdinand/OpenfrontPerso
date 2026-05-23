@@ -50,6 +50,7 @@ import {
   TickMetricsEvent,
 } from "./InputHandler";
 import { endGame, startGame, startTime } from "./LocalPersistantStats";
+import { structureNameStore } from "./StructureNameStore";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { GoToPlayerEvent } from "./TransformHandler";
 import {
@@ -60,6 +61,7 @@ import {
   SendBoatAttackIntentEvent,
   SendBreakAllianceIntentEvent,
   SendHashEvent,
+  SendPlaneAttackIntentEvent,
   SendSpawnIntentEvent,
   SendUpgradeStructureIntentEvent,
   Transport,
@@ -835,6 +837,12 @@ export class ClientGameRunner {
     }
     console.log(`clicked cell ${cell}`);
     const tile = this.gameView.ref(cell.x, cell.y);
+
+    // Left-click on any structure (own or foreign) opens the rename prompt
+    // and consumes the click so the spawn/attack flow below doesn't run.
+    if (this.tryRenameStructureAt(cell.x, cell.y)) {
+      return;
+    }
     if (
       this.gameView.isLand(tile) &&
       !this.gameView.hasOwner(tile) &&
@@ -863,8 +871,40 @@ export class ClientGameRunner {
         );
       } else if (this.canAutoBoat(actions.buildableUnits, tile)) {
         this.sendBoatAttackIntent(tile);
+      } else if (this.canPlaneAttack(tile)) {
+        this.sendPlaneAttackIntent(tile);
       }
     });
+  }
+
+  /**
+   * Find the nearest structure to (x, y) within a small radius and open a
+   * rename prompt for it. Returns true when a structure was hit so the
+   * caller can suppress the default click action.
+   */
+  private tryRenameStructureAt(x: number, y: number): boolean {
+    const RADIUS = 2;
+    let bestId: number | null = null;
+    let bestD2 = RADIUS * RADIUS;
+    for (const u of this.gameView.units(...Structures.types)) {
+      const t = u.tile();
+      const dx = this.gameView.x(t) - x;
+      const dy = this.gameView.y(t) - y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 > bestD2) continue;
+      bestD2 = d2;
+      bestId = u.id();
+    }
+    if (bestId === null) return false;
+
+    const existing = structureNameStore.get(bestId) ?? "";
+    const next = window.prompt(
+      translateText("structure_rename.prompt"),
+      existing,
+    );
+    if (next === null) return true; // cancelled, still consumed
+    structureNameStore.set(bestId, next);
+    return true;
   }
 
   private autoUpgradeEvent(event: AutoUpgradeEvent) {
@@ -1160,6 +1200,38 @@ export class ClientGameRunner {
     const limit = 100;
     const limitSquared = limit * limit;
     return distanceSquared < limitSquared;
+  }
+
+  /**
+   * Long-distance fallback: if neither ground attack nor naval colonization
+   * applies, see whether the player has an airport close enough to the
+   * destination to launch colon planes. Mirrors the spawner's range gate.
+   */
+  private canPlaneAttack(tile: TileRef): boolean {
+    if (!this.myPlayer) return false;
+    if (!this.gameView.isLand(tile)) return false;
+    if (this.myPlayer.gold() < 50_000n) return false;
+
+    const PLANE_RANGE = 600;
+    const limitSquared = PLANE_RANGE * PLANE_RANGE;
+    const airports = this.gameView.units(UnitType.Airport);
+    for (const a of airports) {
+      if (a.owner().smallID() !== this.myPlayer.smallID()) continue;
+      if (this.gameView.euclideanDistSquared(tile, a.tile()) < limitSquared) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private sendPlaneAttackIntent(tile: TileRef) {
+    if (!this.myPlayer) return;
+    this.eventBus.emit(
+      new SendPlaneAttackIntentEvent(
+        tile,
+        this.myPlayer.troops() * this.renderer.uiState.attackRatio,
+      ),
+    );
   }
 
   private onMouseMove(event: MouseMoveEvent) {

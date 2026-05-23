@@ -1227,6 +1227,7 @@ export class PlayerImpl implements Player {
       case UnitType.Airport:
         return this.landBasedStructureSpawn(targetTile, validTiles);
       case UnitType.Plane:
+      case UnitType.AttackPlane:
         // Planes spawn directly above their source airport — no
         // additional tile validation, the airport's tile is already
         // owned by the player.

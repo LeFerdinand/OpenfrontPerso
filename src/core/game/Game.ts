@@ -347,6 +347,7 @@ export enum UnitType {
   Factory = "Factory",
   Airport = "Airport",
   Plane = "Plane",
+  AttackPlane = "AttackPlane",
 }
 
 export enum TrainType {
@@ -450,6 +451,11 @@ export interface UnitParamsMap {
 
   [UnitType.Plane]: {
     targetUnit: Unit;
+  };
+
+  [UnitType.AttackPlane]: {
+    targetTile: number;
+    troops: number;
   };
 
   [UnitType.MIRV]: {
@@ -937,6 +943,7 @@ export interface Game extends GameMap {
     params?: Record<string, string | number>,
     unitID?: number,
     focusPlayerID?: PlayerID,
+    focusTile?: TileRef,
   ): void;
   displayIncomingUnit(
     unitID: number,
@@ -1058,6 +1065,7 @@ export enum MessageType {
   DONATION_RECEIVED,
   CHAT,
   RENEW_ALLIANCE,
+  WEATHER_EVENT,
 }
 
 // Message categories used for filtering events in the EventsDisplay
@@ -1067,6 +1075,7 @@ export enum MessageCategory {
   ALLIANCE = "ALLIANCE",
   TRADE = "TRADE",
   CHAT = "CHAT",
+  WEATHER = "WEATHER",
 }
 
 // Ensures that all message types are included in a category
@@ -1094,6 +1103,7 @@ export const MESSAGE_TYPE_CATEGORIES: Record<MessageType, MessageCategory> = {
   [MessageType.DONATION_SENT]: MessageCategory.TRADE,
   [MessageType.DONATION_RECEIVED]: MessageCategory.TRADE,
   [MessageType.CHAT]: MessageCategory.CHAT,
+  [MessageType.WEATHER_EVENT]: MessageCategory.WEATHER,
 } as const;
 
 /**

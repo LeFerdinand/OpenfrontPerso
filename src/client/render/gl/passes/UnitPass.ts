@@ -37,6 +37,7 @@ import type { RendererConfig, UnitState } from "../../types";
 import {
   TrainType,
   UT_ATOM_BOMB,
+  UT_ATTACK_PLANE,
   UT_HYDROGEN_BOMB,
   UT_MIRV,
   UT_MIRV_WARHEAD,
@@ -441,6 +442,13 @@ export class UnitPass {
 
       let atlasIdx = this.typeToAtlasCol.get(unit.unitType);
 
+      // Colon planes reuse the trade-plane atlas slot — same sprite, same
+      // rotation handling. Aliased here instead of being added to
+      // ALL_UNIT_TYPES so we don't have to allocate a new atlas column.
+      if (atlasIdx === undefined && unit.unitType === UT_ATTACK_PLANE) {
+        atlasIdx = PLANE_COL;
+      }
+
       // Train sub-type resolution: "Train" isn't in UNIT_ORDER.
       // Resolve to engine/carriage/loaded carriage based on trainType + loaded fields.
       if (atlasIdx === undefined && unit.unitType === UT_TRAIN) {
@@ -477,7 +485,8 @@ export class UnitPass {
         }
       }
 
-      const isPlane = unit.unitType === UT_PLANE;
+      const isPlane =
+        unit.unitType === UT_PLANE || unit.unitType === UT_ATTACK_PLANE;
       const flags = isPlane
         ? FLAG_PLANE
         : isTradeFriendly

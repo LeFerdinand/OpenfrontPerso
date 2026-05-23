@@ -8,6 +8,7 @@ import { UIState } from "../UIState";
 import { BuildPreviewController } from "../controllers/BuildPreviewController";
 import { HoverHighlightController } from "../controllers/HoverHighlightController";
 import { WarshipSelectionController } from "../controllers/WarshipSelectionController";
+import { structureNameStore } from "../StructureNameStore";
 import { GameView as WebGLGameView } from "../render/gl";
 import { FrameProfiler } from "./FrameProfiler";
 import { ActionableEvents } from "./layers/ActionableEvents";
@@ -34,6 +35,7 @@ import { PlayerPanel } from "./layers/PlayerPanel";
 import { ReplayPanel } from "./layers/ReplayPanel";
 import { SettingsModal } from "./layers/SettingsModal";
 import { SpawnTimer } from "./layers/SpawnTimer";
+import { StructureNameOverlay } from "./layers/StructureNameOverlay";
 import { TeamStats } from "./layers/TeamStats";
 import { UnitDisplay } from "./layers/UnitDisplay";
 import { WinModal } from "./layers/WinModal";
@@ -273,6 +275,15 @@ export function createRenderer(
     new BuildPreviewController(game, eventBus, uiState, transformHandler, view),
     new HoverHighlightController(game, eventBus, transformHandler, view),
     new AttackingTroopsOverlay(game, transformHandler, eventBus, userSettings),
+    new StructureNameOverlay(
+      game,
+      transformHandler,
+      eventBus,
+      structureNameStore,
+    ),
+    // structureNameStore is the page-lifetime singleton imported above;
+    // sharing it lets MainRadialMenu / ClientGameRunner write while the
+    // overlay reads.
     eventsDisplay,
     actionableEvents,
     attacksDisplay,

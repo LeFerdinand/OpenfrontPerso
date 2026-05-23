@@ -42,8 +42,13 @@ export class SAMMissileExecution implements Execution {
       this.active = false;
       return;
     }
-    // Mirv warheads are too fast, and mirv shouldn't be stopped ever
-    const nukesWhitelist = [UnitType.AtomBomb, UnitType.HydrogenBomb];
+    // Mirv warheads are too fast, and mirv shouldn't be stopped ever.
+    // Colon AttackPlanes are slow + cargo-carrying so they're fair game.
+    const nukesWhitelist = [
+      UnitType.AtomBomb,
+      UnitType.HydrogenBomb,
+      UnitType.AttackPlane,
+    ];
     if (
       !this.target.isActive() ||
       !this.ownerUnit.isActive() ||

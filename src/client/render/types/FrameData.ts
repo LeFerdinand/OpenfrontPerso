@@ -7,6 +7,7 @@ import type {
   PlayerStatusData,
   TilePair,
   UnitState,
+  WeatherEventState,
 } from "./Renderer";
 
 /**
@@ -62,6 +63,8 @@ export interface FrameData {
   readonly allianceClusters: ReadonlyMap<number, number>;
   readonly nukeTelegraphs: NukeTelegraphData[];
   readonly attackRings: AttackRingInput[];
+  /** Active weather events for the WeatherPass — one entry per visible storm. */
+  readonly weatherEvents: WeatherEventState[];
   /** True when structures changed this tick (added/removed/level change). */
   readonly structuresDirty: boolean;
 

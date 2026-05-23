@@ -10,6 +10,7 @@ import type {
   PlayerStatusData,
   TilePair,
   UnitState,
+  WeatherEventState,
 } from "../types";
 
 /**
@@ -35,6 +36,7 @@ export interface FrameUploadTarget {
   applyBonusEvents(events: BonusEvent[]): void;
   updateAttackRings(rings: AttackRingInput[]): void;
   updateNukeTelegraphs(data: NukeTelegraphData[]): void;
+  updateWeatherEvents(events: readonly WeatherEventState[]): void;
   updateNames(
     names: ReadonlyMap<string, NameEntry>,
     players: ReadonlyMap<number, PlayerState>,
@@ -139,9 +141,10 @@ export function uploadFrameData(
     view.applyBonusEvents(frame.events.bonusEvents);
   }
 
-  // --- Attack rings + nuke telegraphs ---
+  // --- Attack rings + nuke telegraphs + weather ---
   view.updateAttackRings(frame.attackRings);
   view.updateNukeTelegraphs(frame.nukeTelegraphs);
+  view.updateWeatherEvents(frame.weatherEvents);
 
   // --- Names + player status ---
   view.updateNames(

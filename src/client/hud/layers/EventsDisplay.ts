@@ -21,7 +21,11 @@ import { SendAllianceRequestIntentEvent } from "../../Transport";
 
 import { GameView, PlayerView, UnitView } from "../../../core/game/GameView";
 import { onlyImages } from "../../../core/Util";
-import { GoToPlayerEvent, GoToUnitEvent } from "../../TransformHandler";
+import {
+  GoToPlayerEvent,
+  GoToPositionEvent,
+  GoToUnitEvent,
+} from "../../TransformHandler";
 
 import { PlaySoundEffectEvent } from "../../sound/Sounds";
 import { UIState } from "../../UIState";
@@ -40,6 +44,8 @@ interface GameEvent {
   onDelete?: () => void;
   focusID?: number;
   unitView?: UnitView;
+  /** When set, clicking the message pans the camera to this tile. */
+  focusTile?: number;
 }
 
 const TIER_1_TYPES: ReadonlySet<MessageType> = new Set([
@@ -251,6 +257,7 @@ export class EventsDisplay extends LitElement implements Controller {
       unsafeDescription: true,
       unitView: unitView,
       focusID: event.focusPlayerID,
+      focusTile: event.focusTile,
     });
   }
 
@@ -465,6 +472,12 @@ export class EventsDisplay extends LitElement implements Controller {
     this.eventBus.emit(new GoToUnitEvent(unit));
   }
 
+  emitGoToTileEvent(tile: number) {
+    this.eventBus.emit(
+      new GoToPositionEvent(this.game.x(tile), this.game.y(tile)),
+    );
+  }
+
   onEmojiMessageEvent(update: EmojiUpdate) {
     const myPlayer = this.game.myPlayer();
     if (!myPlayer) return;
@@ -576,7 +589,17 @@ export class EventsDisplay extends LitElement implements Controller {
                   },
                   className: "text-left",
                 })
-              : this.getEventDescription(event)}
+              : event.focusTile !== undefined
+                ? this.renderButton({
+                    content: this.getEventDescription(event),
+                    onClick: () => {
+                      if (event.focusTile !== undefined) {
+                        this.emitGoToTileEvent(event.focusTile);
+                      }
+                    },
+                    className: "text-left",
+                  })
+                : this.getEventDescription(event)}
         </td>
       </tr>
     `;

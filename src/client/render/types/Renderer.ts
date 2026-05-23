@@ -198,6 +198,18 @@ export interface NukeTelegraphData {
   outerRadius: number;
 }
 
+/** Visible weather event used by the WeatherPass each frame. */
+export type WeatherKind = "fog" | "earthquake" | "cyclone";
+export interface WeatherEventState {
+  id: number;
+  kind: WeatherKind;
+  x: number;
+  y: number;
+  radius: number;
+  /** 1.0 = just spawned, 0.0 = expiring this tick. */
+  remaining: number;
+}
+
 /** Lean config for constructing the GPU renderer — no replay-specific fields. */
 export interface RendererConfig {
   mapWidth: number;

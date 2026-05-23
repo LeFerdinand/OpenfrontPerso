@@ -190,6 +190,9 @@ export class Config {
   fogOfWar(): boolean {
     return this._gameConfig.fogOfWar ?? false;
   }
+  weather(): boolean {
+    return this._gameConfig.weather ?? false;
+  }
   infiniteGold(): boolean {
     return this._gameConfig.infiniteGold;
   }
@@ -355,6 +358,14 @@ export class Config {
       case UnitType.Plane:
         info = {
           cost: () => 0n,
+        };
+        break;
+      case UnitType.AttackPlane:
+        info = {
+          // Colon plane: a flat 50k gold per plane, debited at spawn time
+          // by PlaneAttackExecution (not relied on by buildUnit since the
+          // spawner handles gold itself).
+          cost: () => 50_000n,
         };
         break;
       case UnitType.AtomBomb:

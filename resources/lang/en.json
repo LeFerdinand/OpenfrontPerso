@@ -192,6 +192,7 @@
   "single_modal": {
     "random_spawn": "Random spawn",
     "fog_of_war": "Brouillard de guerre",
+    "weather": "Météo",
     "toggle_achievements": "Toggle achievements",
     "sign_in_for_achievements": "Sign in for achievements",
     "options_title": "Options",
@@ -599,6 +600,7 @@
     "disable_alliances": "Disable alliances",
     "water_nukes": "Water nukes",
     "fog_of_war": "Brouillard de guerre",
+    "weather": "Météo",
     "enables_title": "Disable Units",
     "player": "Player",
     "players": "Players",
@@ -962,7 +964,20 @@
     "show_control": "Show Control",
     "show_units": "Show Units"
   },
+  "structure_rename": {
+    "prompt": "Nom du bâtiment (laisser vide pour effacer)"
+  },
   "events_display": {
+    "plane_attack": {
+      "no_airport": "Aucun aéroport disponible pour lancer l'attaque",
+      "out_of_range": "Cible hors de portée de vos aéroports",
+      "fleet_full": "Flotte de colons saturée ou or insuffisant"
+    },
+    "weather": {
+      "fog": "Un brouillard épais se forme",
+      "earthquake": "Un tremblement de terre frappe une chaîne de montagnes",
+      "cyclone": "Un cyclone se forme en mer"
+    },
     "retreating": "retreating",
     "alliance_request_status": "{name} {status} your alliance request",
     "alliance_accepted": "accepted",

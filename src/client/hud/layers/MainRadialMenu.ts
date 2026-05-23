@@ -2,10 +2,12 @@ import { LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
 import { assetUrl } from "../../../core/AssetUrls";
 import { EventBus } from "../../../core/EventBus";
-import { PlayerActions } from "../../../core/game/Game";
+import { PlayerActions, Structures } from "../../../core/game/Game";
 import { TileRef } from "../../../core/game/GameMap";
 import { GameView, PlayerView } from "../../../core/game/GameView";
+import { translateText } from "../../Utils";
 import { Controller } from "../../Controller";
+import { structureNameStore } from "../../StructureNameStore";
 import { TransformHandler } from "../../TransformHandler";
 import { UIState } from "../../UIState";
 import { BuildMenu } from "./BuildMenu";
@@ -87,16 +89,25 @@ export class MainRadialMenu extends LitElement implements Controller {
       if (!this.game.isValidCoord(worldCoords.x, worldCoords.y)) {
         return;
       }
-      if (this.game.myPlayer() === null) {
+      const myPlayer = this.game.myPlayer();
+      if (myPlayer === null) {
         return;
       }
+
+      // Intercept right-click on one of the player's own structures to
+      // open the rename prompt instead of the radial menu.
+      if (
+        this.tryHandleStructureRename(myPlayer, worldCoords.x, worldCoords.y)
+      ) {
+        return;
+      }
+
       this.clickedTile = this.game.ref(worldCoords.x, worldCoords.y);
-      this.game
-        .myPlayer()!
+      myPlayer
         .actions(this.clickedTile)
         .then((actions) => {
           this.updatePlayerActions(
-            this.game.myPlayer()!,
+            myPlayer,
             actions,
             this.clickedTile!,
             event.x,
@@ -104,6 +115,40 @@ export class MainRadialMenu extends LitElement implements Controller {
           );
         });
     });
+  }
+
+  /**
+   * Look for an own structure inside a small radius around (x, y); if found,
+   * prompt the player for a custom name and persist it. Returns true when
+   * the rename flow consumed the right-click so the caller can suppress the
+   * radial menu.
+   */
+  private tryHandleStructureRename(
+    myPlayer: PlayerView,
+    x: number,
+    y: number,
+  ): boolean {
+    const RADIUS = 2;
+    let best: { id: number; d2: number } | null = null;
+    for (const u of this.game.units(...Structures.types)) {
+      if (u.owner().smallID() !== myPlayer.smallID()) continue;
+      const t = u.tile();
+      const dx = this.game.x(t) - x;
+      const dy = this.game.y(t) - y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 > RADIUS * RADIUS) continue;
+      if (best === null || d2 < best.d2) best = { id: u.id(), d2 };
+    }
+    if (best === null) return false;
+
+    const existing = structureNameStore.get(best.id) ?? "";
+    const next = window.prompt(
+      translateText("structure_rename.prompt"),
+      existing,
+    );
+    if (next === null) return true; // cancelled — still consumed the click
+    structureNameStore.set(best.id, next);
+    return true;
   }
 
   private async updatePlayerActions(

@@ -258,6 +258,7 @@ export async function buildPreview(
       if (gc?.instantBuild) gameOptions.push("Instant Build");
       if (gc?.randomSpawn) gameOptions.push("Random Spawn");
       if (gc?.fogOfWar) gameOptions.push("Fog of War");
+      if (gc?.weather) gameOptions.push("Weather");
       if (gc?.nations === "disabled") gameOptions.push("Nations Disabled");
       if (gc?.donateTroops) gameOptions.push("Troop Donations Enabled");
 

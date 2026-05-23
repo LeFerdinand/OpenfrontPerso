@@ -24,6 +24,7 @@ import type {
   RendererConfig,
   TilePair,
   UnitState,
+  WeatherEventState,
 } from "../types";
 import { Camera } from "./Camera";
 import type { RadialMenuItem } from "./Events";
@@ -57,6 +58,7 @@ import { TerrainPass } from "./passes/TerrainPass";
 import { TerritoryPass } from "./passes/TerritoryPass";
 import { TrailPass } from "./passes/TrailPass";
 import { UnitPass } from "./passes/UnitPass";
+import { WeatherPass } from "./passes/WeatherPass";
 import { createRenderSettings, type RenderSettings } from "./RenderSettings";
 import { AffiliationPalette } from "./utils/Affiliation";
 import { buildTerrainRGBA, getPaletteSize } from "./utils/ColorUtils";
@@ -121,6 +123,7 @@ export class GPURenderer {
   private moveIndicatorPass: MoveIndicatorPass;
   private nukeTrajectoryPass: NukeTrajectoryPass;
   private nukeTelegraphPass: NukeTelegraphPass;
+  private weatherPass: WeatherPass;
   private heatManager: HeatManager;
   private affiliationPalette: AffiliationPalette;
   private coordinateGridPass: CoordinateGridPass;
@@ -408,6 +411,7 @@ export class GPURenderer {
     this.moveIndicatorPass = new MoveIndicatorPass(gl, this.settings);
     this.nukeTrajectoryPass = new NukeTrajectoryPass(gl, this.settings);
     this.nukeTelegraphPass = new NukeTelegraphPass(gl, this.settings);
+    this.weatherPass = new WeatherPass(gl);
 
     // --- Scene capture target (for night composite) ---
     const sceneTex = gl.createTexture()!;
@@ -779,6 +783,10 @@ export class GPURenderer {
 
   updateNukeTelegraphs(data: NukeTelegraphData[]): void {
     this.nukeTelegraphPass.update(data);
+  }
+
+  updateWeatherEvents(events: readonly WeatherEventState[]): void {
+    this.weatherPass.updateEvents(events);
   }
 
   updateSpawnOverlay(inSpawnPhase: boolean, centers: SpawnCenter[]): void {
@@ -1165,6 +1173,7 @@ export class GPURenderer {
     this.selectionBoxPass.draw(cam, this.frameTick);
     this.moveIndicatorPass.draw(cam, zoom);
     this.nukeTelegraphPass.draw(cam);
+    this.weatherPass.draw(cam);
     if (pe.falloutBloom) this.bloomPass.draw(cam, this.frameTick);
     if (pe.mapOverlay) this.trailPass.draw(cam);
     if (pe.unit) this.unitPass.drawMissiles(cam);
@@ -1225,6 +1234,7 @@ export class GPURenderer {
     this.moveIndicatorPass.dispose();
     this.nukeTrajectoryPass.dispose();
     this.nukeTelegraphPass.dispose();
+    this.weatherPass.dispose();
     this.barPass.dispose();
     this.fogOfWarPass.dispose();
     disposeGPUResources(this.gl, this.res);

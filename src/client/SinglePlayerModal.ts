@@ -50,6 +50,7 @@ const DEFAULT_OPTIONS = {
   instantBuild: false,
   randomSpawn: false,
   fogOfWar: false,
+  weather: false,
   useRandomMap: false,
   gameMode: GameMode.FFA,
   teamCount: 2 as TeamCountConfig,
@@ -81,6 +82,7 @@ export class SinglePlayerModal extends BaseModal {
   @state() private instantBuild: boolean = DEFAULT_OPTIONS.instantBuild;
   @state() private randomSpawn: boolean = DEFAULT_OPTIONS.randomSpawn;
   @state() private fogOfWar: boolean = DEFAULT_OPTIONS.fogOfWar;
+  @state() private weather: boolean = DEFAULT_OPTIONS.weather;
   @state() private useRandomMap: boolean = DEFAULT_OPTIONS.useRandomMap;
   @state() private gameMode: GameMode = DEFAULT_OPTIONS.gameMode;
   @state() private teamCount: TeamCountConfig = DEFAULT_OPTIONS.teamCount;
@@ -304,6 +306,10 @@ export class SinglePlayerModal extends BaseModal {
                     checked: this.fogOfWar,
                   },
                   {
+                    labelKey: "single_modal.weather",
+                    checked: this.weather,
+                  },
+                  {
                     labelKey: "single_modal.infinite_gold",
                     checked: this.infiniteGold,
                   },
@@ -380,6 +386,7 @@ export class SinglePlayerModal extends BaseModal {
       this.instantBuild !== DEFAULT_OPTIONS.instantBuild ||
       this.randomSpawn !== DEFAULT_OPTIONS.randomSpawn ||
       this.fogOfWar !== DEFAULT_OPTIONS.fogOfWar ||
+      this.weather !== DEFAULT_OPTIONS.weather ||
       this.gameMode !== DEFAULT_OPTIONS.gameMode ||
       this.goldMultiplier !== DEFAULT_OPTIONS.goldMultiplier ||
       this.startingGold !== DEFAULT_OPTIONS.startingGold ||
@@ -406,6 +413,7 @@ export class SinglePlayerModal extends BaseModal {
     this.instantBuild = DEFAULT_OPTIONS.instantBuild;
     this.randomSpawn = DEFAULT_OPTIONS.randomSpawn;
     this.fogOfWar = DEFAULT_OPTIONS.fogOfWar;
+    this.weather = DEFAULT_OPTIONS.weather;
     this.teamCount = DEFAULT_OPTIONS.teamCount;
     this.disabledUnits = [...DEFAULT_OPTIONS.disabledUnits];
     this.goldMultiplier = DEFAULT_OPTIONS.goldMultiplier;
@@ -486,6 +494,9 @@ export class SinglePlayerModal extends BaseModal {
         break;
       case "single_modal.fog_of_war":
         this.fogOfWar = checked;
+        break;
+      case "single_modal.weather":
+        this.weather = checked;
         break;
       case "single_modal.infinite_gold":
         this.infiniteGold = checked;
@@ -692,6 +703,7 @@ export class SinglePlayerModal extends BaseModal {
               instantBuild: this.instantBuild,
               randomSpawn: this.randomSpawn,
               fogOfWar: this.fogOfWar,
+              weather: this.weather,
               disabledUnits: this.disabledUnits
                 .map((u) => Object.values(UnitType).find((ut) => ut === u))
                 .filter((ut): ut is UnitType => ut !== undefined),
