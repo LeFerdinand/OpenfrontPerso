@@ -97,10 +97,17 @@
       defer
     ></script>
 
+    <!-- Playwire RAMP SDK disabled — La Taniere is ad-free. -->
     <script data-cfasync="false">
-      window.ramp = window.ramp || {};
-      window.ramp.que = window.ramp.que || [];
-      window.ramp.passiveMode = true;
+      window.ramp = {
+        que: [],
+        passiveMode: true,
+        addUnits: function () { return Promise.resolve(); },
+        destroyUnits: function () {},
+        spaNewPage: function () {},
+        showCorner: function () {},
+        hideCorner: function () {},
+      };
     </script>
 
     <script>
@@ -445,12 +452,7 @@
       data-cf-beacon='{"token": "03d93e6fefb349c28ee69b408fa25a13"}'
     ></script>
     <script type="module" src="/src/client/Main.ts"></script>
-    <footer>
-      <script
-        data-cfasync="false"
-        async
-        src="//cdn.intergient.com/1025558/75940/ramp.js"
-      ></script>
-    </footer>
+    <!-- Playwire RAMP CDN script intentionally removed (no ads on La Taniere). -->
+    <footer></footer>
   </body>
 </html>

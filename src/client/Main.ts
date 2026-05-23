@@ -495,9 +495,10 @@ class Client {
 
     const onUserMe = async (userMeResponse: UserMeResponse | false) => {
       updateAccountNavButton(userMeResponse);
-      const isAdFree =
-        userMeResponse !== false && userMeResponse.player?.adfree === true;
-      window.adsEnabled = !isAdFree && !crazyGamesSDK.isOnCrazyGames();
+      // La Taniere is ad-free for everyone. The upstream `adfree` user flag
+      // and CrazyGames-specific path stay in the code but are never reached
+      // because we hard-disable the global ads switch here.
+      window.adsEnabled = false;
       document.dispatchEvent(
         new CustomEvent("userMeResponse", {
           detail: userMeResponse,
