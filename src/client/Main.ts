@@ -26,6 +26,7 @@ import { getPlayerCosmeticsRefs } from "./Cosmetics";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
 import "./FlagEditorModal";
 import { FlagEditorModal } from "./FlagEditorModal";
+import "./MapGeneratorPreviewModal";
 import "./FlagInput";
 import { FlagInput } from "./FlagInput";
 import "./FlagInputModal";
@@ -315,6 +316,9 @@ class Client {
     });
     modalRouter.register("flag-input", { tag: "flag-input-modal" });
     modalRouter.register("flag-editor", { tag: "flag-editor-modal" });
+    modalRouter.register("map-generator-preview", {
+      tag: "map-generator-preview-modal",
+    });
 
     // Prefetch turnstile token so it is available when
     // the user joins a lobby.

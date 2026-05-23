@@ -517,7 +517,10 @@
     "taiwanstrait": "Taiwan Strait",
     "danishstraits": "Danish Straits",
     "northwestpassage": "Northwest Passage",
-    "venice": "Venice"
+    "venice": "Venice",
+    "randomcontinental": "Continental aléatoire",
+    "randomarchipelago": "Archipel aléatoire",
+    "randommixed": "Mixte aléatoire"
   },
   "map_categories": {
     "featured": "Featured",
@@ -526,7 +529,14 @@
     "tournament": "Tournament",
     "fantasy": "Other",
     "special": "Special",
-    "arcade": "Arcade"
+    "arcade": "Arcade",
+    "random": "Cartes aléatoires"
+  },
+  "random_map_size": {
+    "title": "Taille de la carte générée",
+    "small": "Petite",
+    "medium": "Moyenne",
+    "large": "Grande"
   },
   "map_component": {
     "loading": "Loading...",

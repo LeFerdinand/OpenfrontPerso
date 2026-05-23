@@ -1,6 +1,15 @@
 import { assetUrl } from "../AssetUrls";
 import { FetchGameMapLoader } from "../game/FetchGameMapLoader";
+import {
+  CompositeMapLoader,
+  GeneratedMapLoader,
+} from "../game/GeneratedMapLoader";
 import { ErrorUpdate, GameUpdateViewData } from "../game/GameUpdates";
+import {
+  isRandomMap,
+  randomMapSize as toGenSize,
+  randomMapStyle,
+} from "../game/MapGenerator";
 import { createGameRunner, GameRunner } from "../GameRunner";
 import {
   AttackClusteredPositionsResultMessage,
@@ -17,7 +26,27 @@ import {
 const ctx: Worker = self as any;
 globalThis.__ASSET_MANIFEST__ = __ASSET_MANIFEST__;
 let gameRunner: Promise<GameRunner> | null = null;
-const mapLoader = new FetchGameMapLoader((path) => assetUrl(`maps/${path}`));
+const baseMapLoader = new FetchGameMapLoader((path) => assetUrl(`maps/${path}`));
+
+/** Pick the right loader for the game's map: base FetchGameMapLoader for
+ *  on-disk maps, CompositeMapLoader wrapping a GeneratedMapLoader for the
+ *  procedural Random* types. */
+function loaderForGameStart(
+  cfg: import("../Schemas").GameConfig,
+): import("../game/GameMapLoader").GameMapLoader {
+  if (!isRandomMap(cfg.gameMap)) return baseMapLoader;
+  const style = randomMapStyle(cfg.gameMap);
+  if (style === null) return baseMapLoader;
+  const gen = new GeneratedMapLoader({
+    seed: cfg.mapSeed ?? "default",
+    style,
+    size: toGenSize(cfg.randomMapSize),
+  });
+  return new CompositeMapLoader(
+    baseMapLoader,
+    new Map([[cfg.gameMap, gen]]),
+  );
+}
 // Yield threshold; not a backlog cap. Used to avoid monopolizing the worker task
 // and flooding the main thread with messages during catch-up.
 const MAX_TICKS_BEFORE_YIELD = 4;
@@ -143,7 +172,7 @@ ctx.addEventListener("message", async (e: MessageEvent<MainThreadMessage>) => {
         gameRunner = createGameRunner(
           message.gameStartInfo,
           message.clientID,
-          mapLoader,
+          loaderForGameStart(message.gameStartInfo.config),
           gameUpdate,
         ).then((gr) => {
           sendMessage({

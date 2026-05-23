@@ -18,6 +18,20 @@ const MAP_PLAYLIST = path.join(ROOT, "src", "server", "MapPlaylist.ts");
 
 const allMapKeys = Object.keys(GameMapType) as GameMapName[];
 
+/**
+ * Procedurally-generated maps have no disk assets, no Go generator entry,
+ * and aren't part of the public matchmaking playlist or the mapCategories
+ * grouping (the lobby renders them in a dedicated section above the
+ * category grid). They're exempt from all the file/playlist checks below.
+ */
+const VIRTUAL_MAPS: Set<GameMapName> = new Set([
+  "RandomContinental",
+  "RandomArchipelago",
+  "RandomMixed",
+]);
+
+const diskMapKeys = allMapKeys.filter((k) => !VIRTUAL_MAPS.has(k));
+
 // Maps excluded from the frequency requirement (not part of regular playlists).
 const FREQUENCY_EXEMPTIONS: Set<GameMapName> = new Set([
   "GiantWorldMap",
@@ -29,6 +43,7 @@ const FREQUENCY_EXEMPTIONS: Set<GameMapName> = new Set([
   "Tourney4",
   "EuropeClassic",
   "BritanniaClassic",
+  ...VIRTUAL_MAPS,
 ]);
 
 /** Parse the main.go maps registry and return the set of non-test map folder names. */
@@ -92,7 +107,7 @@ describe("Map consistency", () => {
   test("Every GameMapType is registered in main.go", () => {
     const mainGoMaps = getMainGoMaps();
     const errors: string[] = [];
-    for (const key of allMapKeys) {
+    for (const key of diskMapKeys) {
       const folder = toFolderName(key);
       if (!mainGoMaps.has(folder)) {
         errors.push(`${key} (folder "${folder}") is missing from main.go`);
@@ -123,7 +138,7 @@ describe("Map consistency", () => {
 
   test("Every GameMapType has map-generator assets (image.png + info.json only)", () => {
     const errors: string[] = [];
-    for (const key of allMapKeys) {
+    for (const key of diskMapKeys) {
       const folder = toFolderName(key);
       const dir = path.join(MAP_GEN_MAPS, folder);
 
@@ -153,7 +168,7 @@ describe("Map consistency", () => {
   test("Every GameMapType is listed in at least one mapCategories group", () => {
     const categorized = getCategorizedMaps();
     const errors: string[] = [];
-    for (const key of allMapKeys) {
+    for (const key of diskMapKeys) {
       const value = GameMapType[key];
       if (!categorized.has(value)) {
         errors.push(
@@ -226,7 +241,7 @@ describe("Map consistency", () => {
       "thumbnail.webp",
     ];
 
-    for (const key of allMapKeys) {
+    for (const key of diskMapKeys) {
       const folder = toFolderName(key);
       const dir = path.join(RESOURCES_MAPS, folder);
 

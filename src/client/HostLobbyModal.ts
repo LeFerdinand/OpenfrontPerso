@@ -8,8 +8,10 @@ import {
   GameMapSize,
   GameMapType,
   GameMode,
+  RandomMapSize,
   UnitType,
 } from "../core/game/Game";
+import { isRandomMap } from "../core/game/MapGenerator";
 import { UserSettings } from "../core/game/UserSettings";
 import {
   ClientInfo,
@@ -76,6 +78,7 @@ export class HostLobbyModal extends BaseModal {
   @state() private instantBuild: boolean = false;
   @state() private randomSpawn: boolean = false;
   @state() private compactMap: boolean = false;
+  @state() private randomMapSize: RandomMapSize = RandomMapSize.Medium;
   @state() private goldMultiplier: boolean = false;
   @state() private goldMultiplierValue: number | undefined = undefined;
   @state() private startingGold: boolean = false;
@@ -1070,6 +1073,14 @@ export class HostLobbyModal extends BaseModal {
             gameMapSize: this.compactMap
               ? GameMapSize.Compact
               : GameMapSize.Normal,
+            // Fresh seed each "Apply" so different lobbies of the same
+            // Random* style get different layouts.
+            ...(isRandomMap(this.selectedMap)
+              ? {
+                  mapSeed: Math.floor(Math.random() * 1e12).toString(36),
+                  randomMapSize: this.randomMapSize,
+                }
+              : {}),
             difficulty: this.selectedDifficulty,
             bots: this.bots,
             infiniteGold: this.infiniteGold,

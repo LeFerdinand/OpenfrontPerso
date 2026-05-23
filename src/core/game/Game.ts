@@ -174,6 +174,12 @@ export enum GameMapType {
   DanishStraits = "Danish Straits",
   NorthwestPassage = "Northwest Passage",
   Venice = "Venice",
+  // Procedurally-generated maps. The actual layout is regenerated each game
+  // from a seed transported alongside the GameConfig — see MapGenerator +
+  // GeneratedMapLoader. Same seed → bit-identical map on every client.
+  RandomContinental = "Random Continental",
+  RandomArchipelago = "Random Archipelago",
+  RandomMixed = "Random Mixed",
 }
 
 export type GameMapName = keyof typeof GameMapType;
@@ -294,6 +300,16 @@ export const isGameMode = (value: unknown): value is GameMode =>
 export enum GameMapSize {
   Compact = "Compact",
   Normal = "Normal",
+}
+
+/**
+ * Size preset for procedurally-generated maps. Independent of GameMapSize
+ * which only controls Compact/Normal scaling for pre-baked maps.
+ */
+export enum RandomMapSize {
+  Small = "Small",
+  Medium = "Medium",
+  Large = "Large",
 }
 
 export interface PublicGameModifiers {

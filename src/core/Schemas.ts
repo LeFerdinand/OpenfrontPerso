@@ -16,6 +16,7 @@ import {
   GameType,
   HumansVsNations,
   Quads,
+  RandomMapSize,
   RankedType,
   Trios,
   UnitType,
@@ -222,6 +223,16 @@ export type TeamCountConfig = z.infer<typeof TeamCountConfigSchema>;
 
 export const GameConfigSchema = z.object({
   gameMap: z.enum(GameMapType),
+  /**
+   * Seed used when gameMap is one of the procedural Random* values.
+   * Short string (up to 64 chars). Ignored for pre-baked maps.
+   */
+  mapSeed: z.string().max(64).optional(),
+  /**
+   * Size preset for procedural maps. Defaults to "Medium" when absent.
+   * Ignored for pre-baked maps.
+   */
+  randomMapSize: z.enum(RandomMapSize).optional(),
   difficulty: z.enum(Difficulty),
   donateGold: z.boolean(), // Configures donations to humans only
   donateTroops: z.boolean(), // Configures donations to humans only
@@ -615,6 +626,10 @@ export const ServerPrestartMessageSchema = z.object({
   type: z.literal("prestart"),
   gameMap: z.enum(GameMapType),
   gameMapSize: z.enum(GameMapSize),
+  /** Seed used when gameMap is a procedural Random* type. */
+  mapSeed: z.string().max(64).optional(),
+  /** Generator size preset for procedural maps. */
+  randomMapSize: z.enum(RandomMapSize).optional(),
 });
 
 export const ServerStartGameMessageSchema = z.object({

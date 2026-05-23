@@ -11,6 +11,33 @@ import { translateText } from "../../Utils";
 import "./MapDisplay";
 const randomMap = assetUrl("images/RandomMap.webp");
 
+/** Pseudo-categories rendered above the regular map grid. Each entry maps
+ *  a GameMapType.Random* value to its display label and a CSS gradient
+ *  preview (no on-disk thumbnail exists for procedural maps). */
+const RANDOM_MAP_CARDS: ReadonlyArray<{
+  type: GameMapType;
+  labelKey: string;
+  gradient: string;
+}> = [
+  {
+    type: GameMapType.RandomContinental,
+    labelKey: "map.randomcontinental",
+    gradient: "linear-gradient(135deg,#264b73 0%,#5fa14a 60%,#cccb9e 100%)",
+  },
+  {
+    type: GameMapType.RandomArchipelago,
+    labelKey: "map.randomarchipelago",
+    gradient:
+      "radial-gradient(circle at 25% 30%,#cccb9e 0 8%,#1e6f9f 8% 100%),radial-gradient(circle at 70% 60%,#cccb9e 0 7%,transparent 7% 100%),linear-gradient(135deg,#264b73,#1e6f9f)",
+  },
+  {
+    type: GameMapType.RandomMixed,
+    labelKey: "map.randommixed",
+    gradient:
+      "radial-gradient(ellipse at 30% 50%,#5fa14a 0 18%,#cccb9e 18% 22%,transparent 22% 100%),radial-gradient(circle at 80% 30%,#cccb9e 0 6%,transparent 6% 100%),linear-gradient(135deg,#264b73,#1e6f9f)",
+  },
+];
+
 @customElement("map-picker")
 export class MapPicker extends LitElement {
   @property({ type: String }) selectedMap: GameMapType = GameMapType.World;
@@ -91,6 +118,7 @@ export class MapPicker extends LitElement {
   private renderAllMaps() {
     const mapCategoryEntries = Object.entries(mapCategories);
     return html`<div class="space-y-8">
+      ${this.renderRandomMapsSection()}
       ${mapCategoryEntries.map(
         ([categoryKey, maps]) => html`
           <div class="w-full">
@@ -106,6 +134,57 @@ export class MapPicker extends LitElement {
         `,
       )}
     </div>`;
+  }
+
+  /** Top section: 3 procedural-map cards rendered with CSS gradients so we
+   *  don't need a baked thumbnail. Click → `onSelectMap` with the Random*
+   *  GameMapType; the lobby modal then generates a fresh seed at start. */
+  private renderRandomMapsSection() {
+    return html`
+      <div class="w-full">
+        <h4
+          class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 pl-2"
+        >
+          ${translateText("map_categories.random")}
+        </h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          ${RANDOM_MAP_CARDS.map((card) => this.renderRandomCard(card))}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderRandomCard(card: (typeof RANDOM_MAP_CARDS)[number]) {
+    const selected =
+      !this.useRandomMap && this.selectedMap === card.type;
+    return html`
+      <div
+        role="button"
+        tabindex="0"
+        @click=${() => this.handleMapSelection(card.type)}
+        @keydown=${(e: KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            this.handleMapSelection(card.type);
+          }
+        }}
+        class="cursor-pointer w-full h-full p-3 flex flex-col items-center justify-between rounded-xl border transition-all duration-200 active:scale-95 gap-3 group ${selected
+          ? "bg-malibu-blue/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue-strong)]"
+          : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:-translate-y-1"}"
+      >
+        <div
+          class="w-full aspect-[2/1] rounded-lg overflow-hidden flex items-center justify-center text-white/80 text-xs font-bold uppercase tracking-wider"
+          style=${`background:${card.gradient};`}
+        >
+          🎲
+        </div>
+        <div
+          class="text-xs font-bold text-white uppercase tracking-wider text-center leading-tight break-words hyphens-auto"
+        >
+          ${translateText(card.labelKey)}
+        </div>
+      </div>
+    `;
   }
 
   private renderTemplatesTab() {

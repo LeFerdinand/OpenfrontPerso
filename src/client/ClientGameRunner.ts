@@ -52,6 +52,16 @@ import {
 import { endGame, startGame, startTime } from "./LocalPersistantStats";
 import { structureNameStore } from "./StructureNameStore";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
+import {
+  CompositeMapLoader,
+  GeneratedMapLoader,
+} from "../core/game/GeneratedMapLoader";
+import {
+  isRandomMap,
+  randomMapSize,
+  randomMapStyle,
+} from "../core/game/MapGenerator";
+import type { RandomMapSize } from "../core/game/Game";
 import { GoToPlayerEvent } from "./TransformHandler";
 import {
   MoveWarshipIntentEvent,
@@ -72,6 +82,31 @@ import { createRenderer, GameRenderer } from "./hud/GameRenderer";
 import { GameView as WebGLGameView } from "./render/gl";
 import { ALL_UNIT_TYPES, UnitState } from "./render/types";
 import { SoundManager } from "./sound/SoundManager";
+
+/**
+ * Returns the right loader for a given game map: the base FetchGameMapLoader
+ * for the 50+ pre-baked maps, or a CompositeMapLoader that overrides the
+ * Random* map types with an in-memory GeneratedMapLoader seeded by the
+ * GameConfig's mapSeed.
+ */
+function makeMapLoader(
+  map: import("../core/game/Game").GameMapType,
+  seed: string | undefined,
+  size: RandomMapSize | undefined,
+): GameMapLoader {
+  if (!isRandomMap(map)) return terrainMapFileLoader;
+  const style = randomMapStyle(map);
+  if (style === null) return terrainMapFileLoader;
+  const generated = new GeneratedMapLoader({
+    seed: seed ?? "default",
+    style,
+    size: randomMapSize(size),
+  });
+  return new CompositeMapLoader(
+    terrainMapFileLoader,
+    new Map([[map, generated]]),
+  );
+}
 
 export interface LobbyConfig {
   cosmetics: PlayerCosmeticRefs;
@@ -131,10 +166,15 @@ export function joinLobby(
       console.log(
         `lobby: game prestarting: ${JSON.stringify(message, replacer)}`,
       );
+      const loader = makeMapLoader(
+        message.gameMap,
+        message.mapSeed,
+        message.randomMapSize,
+      );
       terrainLoad = loadTerrainMap(
         message.gameMap,
         message.gameMapSize,
-        terrainMapFileLoader,
+        loader,
       );
       resolvePrestart();
     }
@@ -149,6 +189,11 @@ export function joinLobby(
       resolveJoin();
       // For multiplayer games, GameStartInfo is not known until game starts.
       lobbyConfig.gameStartInfo = message.gameStartInfo;
+      const loaderForGame = makeMapLoader(
+        message.gameStartInfo.config.gameMap,
+        message.gameStartInfo.config.mapSeed,
+        message.gameStartInfo.config.randomMapSize,
+      );
       createClientGame(
         lobbyConfig,
         clientID,
@@ -156,7 +201,7 @@ export function joinLobby(
         transport,
         userSettings,
         terrainLoad,
-        terrainMapFileLoader,
+        loaderForGame,
       )
         .then((r) => {
           currentGameRunner = r;

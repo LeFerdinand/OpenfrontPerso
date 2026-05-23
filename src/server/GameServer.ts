@@ -660,6 +660,8 @@ export class GameServer {
       type: "prestart",
       gameMap: this.gameConfig.gameMap,
       gameMapSize: this.gameConfig.gameMapSize,
+      mapSeed: this.gameConfig.mapSeed,
+      randomMapSize: this.gameConfig.randomMapSize,
     });
 
     if (!prestartMsg.success) {

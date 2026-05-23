@@ -9,8 +9,10 @@ import {
   GameMapType,
   GameMode,
   GameType,
+  RandomMapSize,
   UnitType,
 } from "../core/game/Game";
+import { isRandomMap } from "../core/game/MapGenerator";
 import { TeamCountConfig } from "../core/Schemas";
 import { generateID } from "../core/Util";
 import { hasLinkedAccount } from "./Api";
@@ -61,6 +63,7 @@ const DEFAULT_OPTIONS = {
   disabledUnits: [] as UnitType[],
   disableAlliances: false,
   waterNukes: false,
+  randomMapSize: RandomMapSize.Medium,
 } as const;
 
 @customElement("single-player-modal")
@@ -101,6 +104,8 @@ export class SinglePlayerModal extends BaseModal {
   ];
   @state() private disableAlliances: boolean = DEFAULT_OPTIONS.disableAlliances;
   @state() private waterNukes: boolean = DEFAULT_OPTIONS.waterNukes;
+  @state() private randomMapSize: RandomMapSize =
+    DEFAULT_OPTIONS.randomMapSize;
 
   private mapLoader = terrainMapFileLoader;
 
@@ -351,6 +356,7 @@ export class SinglePlayerModal extends BaseModal {
 
         <!-- Footer Action -->
         <div class="p-6 border-t border-white/10 bg-black/20">
+          ${isRandomMap(this.selectedMap) ? this.renderRandomMapSizePicker() : null}
           ${
             hasLinkedAccount(this.userMeResponse) && this.hasOptionsChanged()
               ? html`<div
@@ -369,6 +375,40 @@ export class SinglePlayerModal extends BaseModal {
             translationKey="single_modal.start"
             @click=${this.startGame}
           ></o-button>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderRandomMapSizePicker(): TemplateResult {
+    const sizes: Array<{ value: RandomMapSize; key: string }> = [
+      { value: RandomMapSize.Small, key: "random_map_size.small" },
+      { value: RandomMapSize.Medium, key: "random_map_size.medium" },
+      { value: RandomMapSize.Large, key: "random_map_size.large" },
+    ];
+    return html`
+      <div class="mb-4">
+        <div
+          class="text-xs font-bold text-white/70 uppercase tracking-wider mb-2"
+        >
+          ${translateText("random_map_size.title")}
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          ${sizes.map(
+            (s) => html`
+              <button
+                type="button"
+                class=${`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${
+                  this.randomMapSize === s.value
+                    ? "bg-malibu-blue/20 text-white border border-malibu-blue/50"
+                    : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10"
+                }`}
+                @click=${() => (this.randomMapSize = s.value)}
+              >
+                ${translateText(s.key)}
+              </button>
+            `,
+          )}
         </div>
       </div>
     `;
@@ -690,6 +730,14 @@ export class SinglePlayerModal extends BaseModal {
               gameMapSize: this.compactMap
                 ? GameMapSize.Compact
                 : GameMapSize.Normal,
+              // Procedural maps: generate a fresh seed for each game so
+              // the same Random* choice produces different layouts.
+              ...(isRandomMap(this.selectedMap)
+                ? {
+                    mapSeed: Math.floor(Math.random() * 1e12).toString(36),
+                    randomMapSize: this.randomMapSize,
+                  }
+                : {}),
               gameType: GameType.Singleplayer,
               gameMode: this.gameMode,
               playerTeams: this.teamCount,

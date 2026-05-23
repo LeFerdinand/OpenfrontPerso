@@ -2,6 +2,7 @@ import { LitElement, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import medalIconRaw from "../../../../resources/images/MedalIconWhite.svg?raw";
 import { Difficulty, GameMapType } from "../../../core/game/Game";
+import { isRandomMap } from "../../../core/game/MapGenerator";
 import { terrainMapFileLoader } from "../../TerrainMapFileLoader";
 import { translateText } from "../../Utils";
 
@@ -52,6 +53,15 @@ export class MapDisplay extends LitElement {
     try {
       this.isLoading = true;
       const mapValue = GameMapType[this.mapKey as keyof typeof GameMapType];
+      // Procedural maps have no on-disk manifest/thumbnail — render via
+      // the dedicated card path in MapPicker; if this component is asked
+      // to display one anyway (legacy call site), short-circuit gracefully.
+      if (isRandomMap(mapValue)) {
+        this.mapWebpPath = null;
+        this.mapName = mapValue;
+        this.hasNations = true;
+        return;
+      }
       const data = terrainMapFileLoader.getMapData(mapValue);
       this.mapWebpPath = data.webpPath;
       const manifest = await data.manifest();
