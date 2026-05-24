@@ -950,7 +950,7 @@ export class JoinLobbyModal extends BaseModal {
   }
 
   private async checkActiveLobby(lobbyId: string): Promise<boolean> {
-    const url = `/${ClientEnv.workerPath(lobbyId)}/api/game/${lobbyId}/exists`;
+    const url = `${ClientEnv.basePath()}${ClientEnv.workerPath(lobbyId)}/api/game/${lobbyId}/exists`;
 
     const response = await fetch(url, {
       method: "GET",

@@ -783,8 +783,10 @@ class Client {
       return;
     }
 
+    // Match /game/ID or /w<N>/game/ID, with or without the base prefix
+    // (e.g. /openfront/w0/game/abc in prod, /game/abc in dev).
     const pathMatch = window.location.pathname.match(
-      /^\/(?:w\d+\/)?game\/([^/]+)/,
+      /(?:^|\/)(?:w\d+\/)?game\/([^/]+)/,
     );
     const lobbyId =
       pathMatch && GAME_ID_REGEX.test(pathMatch[1]) ? pathMatch[1] : null;
@@ -805,7 +807,7 @@ class Client {
       }
     }
     if (decodedHash.startsWith("#refresh")) {
-      window.location.href = "/";
+      window.location.href = ClientEnv.basePath();
     }
 
     if (this.consumeRequeueUrl()) {
@@ -955,8 +957,8 @@ class Client {
         null,
         "",
         lobbyIdHidden
-          ? "/streamer-mode"
-          : `/${ClientEnv.workerPath(lobby.gameID)}/game/${lobby.gameID}?live`,
+          ? `${ClientEnv.basePath()}streamer-mode`
+          : `${ClientEnv.basePath()}${ClientEnv.workerPath(lobby.gameID)}/game/${lobby.gameID}?live`,
       );
 
       // Store current URL for popstate confirmation
@@ -967,8 +969,8 @@ class Client {
   private updateJoinUrlForShare(lobbyId: string) {
     const lobbyIdHidden = !this.userSettings.lobbyIdVisibility();
     const targetUrl = lobbyIdHidden
-      ? "/streamer-mode"
-      : `/${ClientEnv.workerPath(lobbyId)}/game/${lobbyId}`;
+      ? `${ClientEnv.basePath()}streamer-mode`
+      : `${ClientEnv.basePath()}${ClientEnv.workerPath(lobbyId)}/game/${lobbyId}`;
     const currentUrl = window.location.pathname;
 
     if (currentUrl !== targetUrl) {

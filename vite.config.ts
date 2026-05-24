@@ -156,7 +156,11 @@ export default defineConfig(({ mode }) => {
       setupFiles: "./tests/setup.ts",
     },
     root: "./",
-    base: "/",
+    // Served under /openfront/ on lataniereplay.fr (nginx strips the prefix
+    // before forwarding to the Node server, but the browser still loads
+    // assets with this prefix). Stays "/" in dev so vite dev server keeps
+    // working at localhost:9000/.
+    base: isProduction ? "/openfront/" : "/",
     publicDir: isProduction ? false : "resources",
 
     resolve: {

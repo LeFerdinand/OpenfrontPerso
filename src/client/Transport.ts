@@ -342,7 +342,9 @@ export class Transport {
     const wsHost = window.location.host;
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const workerPath = ClientEnv.workerPath(this.lobbyConfig.gameID);
-    this.socket = new WebSocket(`${wsProtocol}//${wsHost}/${workerPath}`);
+    this.socket = new WebSocket(
+      `${wsProtocol}//${wsHost}${ClientEnv.basePath()}${workerPath}`,
+    );
     this.onconnect = onconnect;
     this.onmessage = onmessage;
     this.socket.onopen = () => {

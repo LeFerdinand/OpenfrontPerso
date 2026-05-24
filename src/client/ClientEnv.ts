@@ -104,6 +104,15 @@ export class ClientEnv {
   static workerPath(gameID: GameID): string {
     return `w${ClientEnv.workerIndex(gameID)}`;
   }
+  /**
+   * URL prefix where the app is mounted (always ends with "/"). In dev this
+   * is "/"; in prod we serve under "/openfront/" so nginx can free the root
+   * for a landing page. Use this for every URL constructed at runtime —
+   * fetches, WebSockets, history pushes, share links.
+   */
+  static basePath(): string {
+    return import.meta.env.BASE_URL;
+  }
 }
 /**
  * Values that flow from server → client via index.html. Set on the server from

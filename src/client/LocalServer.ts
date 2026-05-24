@@ -305,15 +305,18 @@ export class LocalServer {
 
     compress(jsonString)
       .then((compressedData) => {
-        return fetch(`/${workerPath}/api/archive_singleplayer_game`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Content-Encoding": "gzip",
+        return fetch(
+          `${ClientEnv.basePath()}${workerPath}/api/archive_singleplayer_game`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Encoding": "gzip",
+            },
+            body: compressedData,
+            keepalive: true, // Ensures request completes even if page unloads
           },
-          body: compressedData,
-          keepalive: true, // Ensures request completes even if page unloads
-        });
+        );
       })
       .catch((error) => {
         console.error("Failed to archive singleplayer game:", error);

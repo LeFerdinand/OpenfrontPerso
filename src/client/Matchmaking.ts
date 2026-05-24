@@ -164,7 +164,7 @@ export class MatchmakingModal extends BaseModal {
     if (this.gameID === null) {
       return;
     }
-    const url = `/${ClientEnv.workerPath(this.gameID)}/api/game/${this.gameID}/exists`;
+    const url = `${ClientEnv.basePath()}${ClientEnv.workerPath(this.gameID)}/api/game/${this.gameID}/exists`;
 
     const response = await fetch(url, {
       method: "GET",

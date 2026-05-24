@@ -137,7 +137,7 @@ export class HostLobbyModal extends BaseModal {
         return link;
       }
     }
-    return `${window.location.origin}/${ClientEnv.workerPath(this.lobbyId)}/game/${this.lobbyId}?lobby&s=${encodeURIComponent(this.lobbyUrlSuffix)}`;
+    return `${window.location.origin}${ClientEnv.basePath()}${ClientEnv.workerPath(this.lobbyId)}/game/${this.lobbyId}?lobby&s=${encodeURIComponent(this.lobbyUrlSuffix)}`;
   }
 
   private async constructUrl(): Promise<string> {
@@ -1188,7 +1188,7 @@ async function createLobby(gameID: string): Promise<GameInfo> {
   const token = await getPlayToken();
   try {
     const response = await fetch(
-      `/${ClientEnv.workerPath(gameID)}/api/create_game/${gameID}`,
+      `${ClientEnv.basePath()}${ClientEnv.workerPath(gameID)}/api/create_game/${gameID}`,
       {
         method: "POST",
         headers: {

@@ -9,7 +9,7 @@ interface LobbySocketOptions {
 
 function getRandomWorkerPath(numWorkers: number): string {
   const workerIndex = Math.floor(Math.random() * numWorkers);
-  return `/w${workerIndex}`;
+  return `w${workerIndex}`;
 }
 
 export class PublicLobbySocket {
@@ -53,7 +53,7 @@ export class PublicLobbySocket {
       }
 
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}${this.workerPath}/lobbies`;
+      const wsUrl = `${protocol}//${window.location.host}${ClientEnv.basePath()}${this.workerPath}/lobbies`;
 
       this.ws = new WebSocket(wsUrl);
       this.wsAttemptCounted = false;
