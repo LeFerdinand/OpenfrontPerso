@@ -89,9 +89,18 @@ export class WorkerClient {
         id: messageId,
         gameStartInfo: this.gameStartInfo,
         clientID: this.clientID,
-        // Fall back to page origin so the worker can resolve relative
-        // asset URLs — a blob: worker has no document base for fetch().
-        cdnBase: getCdnBase() || self.location.origin,
+        // Worker context cannot resolve relative URLs (blob: workers have
+        // no document base for fetch). Three cases:
+        //   1. Empty cdnBase → use page origin (e.g. https://example.com).
+        //   2. Absolute cdnBase (https://cdn.example.com) → pass through.
+        //   3. Path-only cdnBase like "/openfront" → prepend page origin
+        //      so the worker gets https://example.com/openfront.
+        cdnBase: (() => {
+          const cdn = getCdnBase();
+          if (!cdn) return self.location.origin;
+          if (/^https?:\/\//i.test(cdn)) return cdn;
+          return self.location.origin + cdn;
+        })(),
         // Send the manifest explicitly: Vite's __ASSET_MANIFEST__ define
         // doesn't reach the inlined worker bundle in production builds.
         assetManifest: getAssetManifest(),
