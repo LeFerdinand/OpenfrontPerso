@@ -1192,7 +1192,7 @@
   },
   "flag_input": {
     "title": "Select Flag",
-    "create": "Créer un drapeau",
+    "create": "Dessiner un drapeau",
     "button_title": "Pick a flag!",
     "search_flag": "Search..."
   },

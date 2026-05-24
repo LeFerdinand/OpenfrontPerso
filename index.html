@@ -296,7 +296,11 @@
         ></ranked-modal>
       </main-layout>
 
-      <div class="[.in-game_&]:hidden mt-auto flex flex-col shrink-0">
+      <div
+        class="[.in-game_&]:hidden mt-auto flex flex-col shrink-0"
+        aria-hidden="true"
+        style="display: none; pointer-events: none;"
+      >
         <page-footer></page-footer>
       </div>
 
