@@ -105,6 +105,13 @@ export interface RenderSettings {
     scale: number;
     outlineWidth: number;
   };
+  toxicOverlay: {
+    colorR: number;
+    colorG: number;
+    colorB: number;
+    alphaBase: number;
+    alphaPulse: number;
+  };
   bar: {
     healthBarW: number;
     healthBarH: number;

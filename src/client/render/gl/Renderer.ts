@@ -52,6 +52,7 @@ import { SAMRadiusPass } from "./passes/SamRadiusPass";
 import { SelectionBoxPass } from "./passes/SelectionBoxPass";
 import type { SpawnCenter } from "./passes/SpawnOverlayPass";
 import { SpawnOverlayPass } from "./passes/SpawnOverlayPass";
+import { ToxicOverlayPass } from "./passes/ToxicOverlayPass";
 import { StructureLevelPass } from "./passes/StructureLevelPass";
 import { StructurePass } from "./passes/StructurePass";
 import { TerrainPass } from "./passes/TerrainPass";
@@ -82,6 +83,7 @@ const SAM_RADIUS_GHOST_TYPES = new Set([
   "City",
   "Atom Bomb",
   "Hydrogen Bomb",
+  "Toxic Missile",
 ]);
 
 /** Subset for build-button hover — excludes City/Silo (SAM radii irrelevant). */
@@ -89,6 +91,7 @@ const SAM_RADIUS_HIGHLIGHT_TYPES = new Set([
   "SAM Launcher",
   "Atom Bomb",
   "Hydrogen Bomb",
+  "Toxic Missile",
 ]);
 
 export class GPURenderer {
@@ -128,6 +131,7 @@ export class GPURenderer {
   private affiliationPalette: AffiliationPalette;
   private coordinateGridPass: CoordinateGridPass;
   private spawnOverlayPass: SpawnOverlayPass;
+  private toxicOverlayPass: ToxicOverlayPass;
   private fogOfWarPass: FogOfWarPass;
   private inSpawnPhase = false;
 
@@ -306,6 +310,15 @@ export class GPURenderer {
       mapH,
       this.res.tileTex,
       this.settings.spawnOverlay,
+    );
+
+    // --- Toxic zone overlay (needs tileTex) ---
+    this.toxicOverlayPass = new ToxicOverlayPass(
+      gl,
+      mapW,
+      mapH,
+      this.res.tileTex,
+      this.settings.toxicOverlay,
     );
 
     // --- Trail (needs trailTex, paletteTex) ---
@@ -1159,6 +1172,7 @@ export class GPURenderer {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     this.spawnOverlayPass.draw(cam);
+    this.toxicOverlayPass.draw(cam, this.frameTick);
     if (pe.mapOverlay) this.borderStampPass.draw(cam);
     if (pe.railroad) this.railroadPass.draw(cam, zoom);
     if (pe.unit) this.unitPass.drawGround(cam);
@@ -1219,6 +1233,7 @@ export class GPURenderer {
     this.affiliationPalette.dispose();
     this.coordinateGridPass.dispose();
     this.spawnOverlayPass.dispose();
+    this.toxicOverlayPass.dispose();
     this.railroadPass.dispose();
     this.rangeCirclePass.dispose();
     this.samRadiusPass.dispose();

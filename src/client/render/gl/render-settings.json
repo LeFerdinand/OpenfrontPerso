@@ -125,6 +125,13 @@
     "scale": 1.2,
     "outlineWidth": 1.4
   },
+  "toxicOverlay": {
+    "colorR": 0.24,
+    "colorG": 0.85,
+    "colorB": 0.32,
+    "alphaBase": 0.32,
+    "alphaPulse": 0.18
+  },
   "bar": {
     "healthBarW": 11,
     "healthBarH": 3,
@@ -303,6 +310,10 @@
       "intensity": 2.8
     },
     "Atom Bomb": {
+      "radius": 16,
+      "intensity": 1.1
+    },
+    "Toxic Missile": {
       "radius": 16,
       "intensity": 1.1
     },

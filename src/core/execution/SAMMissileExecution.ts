@@ -47,6 +47,7 @@ export class SAMMissileExecution implements Execution {
     const nukesWhitelist = [
       UnitType.AtomBomb,
       UnitType.HydrogenBomb,
+      UnitType.ToxicMissile,
       UnitType.AttackPlane,
     ];
     if (

@@ -23,6 +23,7 @@ const mirvIcon = assetUrl("images/MIRVIcon.svg");
 const missileSiloIcon = assetUrl("images/MissileSiloIconWhite.svg");
 const hydrogenBombIcon = assetUrl("images/MushroomCloudIconWhite.svg");
 const atomBombIcon = assetUrl("images/NukeIconWhite.svg");
+const toxicMissileIcon = assetUrl("images/ToxicMissileIconWhite.svg");
 const portIcon = assetUrl("images/PortIcon.svg");
 const samLauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 const defensePostIcon = assetUrl("images/ShieldIconWhite.svg");
@@ -76,6 +77,7 @@ export class UnitDisplay extends LitElement implements Controller {
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
       case UnitType.MIRV:
+      case UnitType.ToxicMissile:
         return (
           this.cost(item) <= (player?.gold() ?? 0n) &&
           (player?.units(UnitType.MissileSilo).length ?? 0) > 0
@@ -124,7 +126,7 @@ export class UnitDisplay extends LitElement implements Controller {
     return html`
       <div class="border-t border-white/10 p-0.5 w-full">
         <div
-          class="grid grid-rows-1 auto-cols-max grid-flow-col gap-0.5 w-fit mx-auto"
+          class="flex flex-wrap justify-center items-center gap-0.5 w-full"
         >
           ${this.renderUnitItem(
             cityIcon,
@@ -202,6 +204,13 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.MIRV,
             "mirv",
             this.keybinds["buildMIRV"]?.key ?? "0",
+          )}
+          ${this.renderUnitItem(
+            toxicMissileIcon,
+            null,
+            UnitType.ToxicMissile,
+            "toxic_missile",
+            this.keybinds["buildToxicMissile"]?.key ?? "T",
           )}
         </div>
       </div>
@@ -284,6 +293,7 @@ export class UnitDisplay extends LitElement implements Controller {
             switch (unitType) {
               case UnitType.AtomBomb:
               case UnitType.HydrogenBomb:
+              case UnitType.ToxicMissile:
                 this.eventBus?.emit(
                   new ToggleStructureEvent([
                     UnitType.MissileSilo,
@@ -305,9 +315,9 @@ export class UnitDisplay extends LitElement implements Controller {
             ${displayHotkey}
           </div>`}
           <div class="flex items-center gap-0.5 pt-0.5">
-            <img src=${icon} alt=${structureKey} class="align-middle size-5" />
+            <img src=${icon} alt=${structureKey} class="align-middle size-4" />
             ${number !== null
-              ? html`<span class="text-xs">${renderNumber(number)}</span>`
+              ? html`<span class="text-[10px]">${renderNumber(number)}</span>`
               : null}
           </div>
         </div>

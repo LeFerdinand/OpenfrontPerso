@@ -113,6 +113,7 @@ export class GameImpl implements Game {
   private _waterManager: WaterManager;
   private _sharedWaterCache: SharedWaterCache;
   private _teamGameSpawnAreas: TeamGameSpawnAreas | undefined;
+  private _toxicExpiry: Map<TileRef, number> = new Map();
 
   constructor(
     private _humans: PlayerInfo[],
@@ -1129,6 +1130,12 @@ export class GameImpl implements Game {
   hasFallout(ref: TileRef): boolean {
     return this._map.hasFallout(ref);
   }
+  hasToxicBit(ref: TileRef): boolean {
+    return this._map.hasToxicBit(ref);
+  }
+  setToxicBit(ref: TileRef, value: boolean): void {
+    this._map.setToxicBit(ref, value);
+  }
   isBorder(ref: TileRef): boolean {
     return this._map.isBorder(ref);
   }
@@ -1192,6 +1199,29 @@ export class GameImpl implements Game {
   }
   numTilesWithFallout(): number {
     return this._map.numTilesWithFallout();
+  }
+  setToxic(tile: TileRef, expiryTick: number): void {
+    this._toxicExpiry.set(tile, expiryTick);
+    if (!this._map.hasToxicBit(tile)) {
+      this._map.setToxicBit(tile, true);
+      this.recordTileUpdate(tile);
+    }
+  }
+  clearToxic(tile: TileRef): void {
+    this._toxicExpiry.delete(tile);
+    if (this._map.hasToxicBit(tile)) {
+      this._map.setToxicBit(tile, false);
+      this.recordTileUpdate(tile);
+    }
+  }
+  isToxic(tile: TileRef): boolean {
+    const expiry = this._toxicExpiry.get(tile);
+    if (expiry === undefined) return false;
+    if (expiry <= this._ticks) {
+      this.clearToxic(tile);
+      return false;
+    }
+    return true;
   }
   stats(): Stats {
     return this._stats;

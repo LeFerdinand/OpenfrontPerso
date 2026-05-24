@@ -352,6 +352,7 @@ export enum UnitType {
   Port = "Port",
   AtomBomb = "Atom Bomb",
   HydrogenBomb = "Hydrogen Bomb",
+  ToxicMissile = "Toxic Missile",
   TradeShip = "Trade Ship",
   MissileSilo = "Missile Silo",
   DefensePost = "Defense Post",
@@ -383,6 +384,7 @@ export const BuildableAttacks = unitTypeGroup([
   UnitType.AtomBomb,
   UnitType.HydrogenBomb,
   UnitType.MIRV,
+  UnitType.ToxicMissile,
   UnitType.Warship,
 ] as const);
 
@@ -438,6 +440,11 @@ export interface UnitParamsMap {
   };
 
   [UnitType.HydrogenBomb]: {
+    targetTile?: number;
+    trajectory: TrajectoryTile[];
+  };
+
+  [UnitType.ToxicMissile]: {
     targetTile?: number;
     trajectory: TrajectoryTile[];
   };
@@ -565,6 +572,7 @@ export interface Attack {
   removeBorderTile(tile: TileRef): void;
   clearBorder(): void;
   borderSize(): number;
+  borderTiles(): ReadonlySet<TileRef>;
   clusteredPositions(): TileRef[];
 }
 
@@ -981,6 +989,12 @@ export interface Game extends GameMap {
   nations(): Nation[];
 
   numTilesWithFallout(): number;
+  /** Mark a tile as toxic (from a ToxicMissile) until the given tick. */
+  setToxic(tile: TileRef, expiryTick: number): void;
+  /** Clear toxic state on a tile (called at expiration). */
+  clearToxic(tile: TileRef): void;
+  /** True if the tile is in an unexpired toxic zone at the current tick. */
+  isToxic(tile: TileRef): boolean;
   stats(): Stats;
 
   addUpdate(update: GameUpdate): void;

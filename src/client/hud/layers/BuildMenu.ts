@@ -34,6 +34,7 @@ const mirvIcon = assetUrl("images/MIRVIcon.svg");
 const missileSiloIcon = assetUrl("images/MissileSiloIconWhite.svg");
 const hydrogenBombIcon = assetUrl("images/MushroomCloudIconWhite.svg");
 const atomBombIcon = assetUrl("images/NukeIconWhite.svg");
+const toxicMissileIcon = assetUrl("images/ToxicMissileIconWhite.svg");
 const portIcon = assetUrl("images/PortIcon.svg");
 const samlauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 const shieldIcon = assetUrl("images/ShieldIconWhite.svg");
@@ -68,6 +69,13 @@ export const buildTable: BuildItemDisplay[][] = [
       icon: hydrogenBombIcon,
       description: "build_menu.desc.hydrogen_bomb",
       key: "unit_type.hydrogen_bomb",
+      countable: false,
+    },
+    {
+      unitType: UnitType.ToxicMissile,
+      icon: toxicMissileIcon,
+      description: "build_menu.desc.toxic_missile",
+      key: "unit_type.toxic_missile",
       countable: false,
     },
     {
@@ -401,7 +409,8 @@ export class BuildMenu extends LitElement implements Controller {
     } else if (buildableUnit.canBuild) {
       const rocketDirectionUp =
         buildableUnit.type === UnitType.AtomBomb ||
-        buildableUnit.type === UnitType.HydrogenBomb
+        buildableUnit.type === UnitType.HydrogenBomb ||
+        buildableUnit.type === UnitType.ToxicMissile
           ? this.uiState.rocketDirectionUp
           : undefined;
       this.eventBus.emit(

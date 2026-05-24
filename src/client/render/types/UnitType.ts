@@ -16,6 +16,7 @@ export const UT_TRADE_SHIP = "Trade Ship" as const;
 export const UT_WARSHIP = "Warship" as const;
 export const UT_ATOM_BOMB = "Atom Bomb" as const;
 export const UT_HYDROGEN_BOMB = "Hydrogen Bomb" as const;
+export const UT_TOXIC_MISSILE = "Toxic Missile" as const;
 export const UT_MIRV = "MIRV" as const;
 export const UT_SAM_MISSILE = "SAMMissile" as const;
 export const UT_SHELL = "Shell" as const;
@@ -51,6 +52,7 @@ export const NUKE_TYPES: ReadonlySet<string> = new Set([
   UT_ATOM_BOMB,
   UT_HYDROGEN_BOMB,
   UT_MIRV,
+  UT_TOXIC_MISSILE,
 ]);
 
 /** Blast radii (in tiles) matching upstream DefaultConfig.nukeMagnitudes(). */
@@ -60,6 +62,7 @@ export const NUKE_MAGNITUDES: Readonly<
   [UT_ATOM_BOMB]: { inner: 12, outer: 30 },
   [UT_HYDROGEN_BOMB]: { inner: 80, outer: 100 },
   [UT_MIRV_WARHEAD]: { inner: 12, outer: 18 },
+  [UT_TOXIC_MISSILE]: { inner: 12, outer: 30 },
 };
 
 // ---------------------------------------------------------------------------
@@ -86,4 +89,5 @@ export const ALL_UNIT_TYPES = [
   UT_TRAIN,
   UT_AIRPORT,
   UT_PLANE,
+  UT_TOXIC_MISSILE,
 ] as const;

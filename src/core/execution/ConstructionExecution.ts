@@ -9,6 +9,7 @@ import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
 import { PortExecution } from "./PortExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
+import { ToxicMissileExecution } from "./ToxicMissileExecution";
 import { WarshipExecution } from "./WarshipExecution";
 
 export class ConstructionExecution implements Execution {
@@ -119,6 +120,18 @@ export class ConstructionExecution implements Execution {
         break;
       case UnitType.MIRV:
         this.mg.addExecution(new MirvExecution(player, this.tile));
+        break;
+      case UnitType.ToxicMissile:
+        this.mg.addExecution(
+          new ToxicMissileExecution(
+            player,
+            this.tile,
+            null,
+            -1,
+            0,
+            this.rocketDirectionUp,
+          ),
+        );
         break;
       case UnitType.Warship:
         this.mg.addExecution(

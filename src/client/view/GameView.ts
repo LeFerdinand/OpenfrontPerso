@@ -44,6 +44,7 @@ const TRAIL_TYPES: ReadonlySet<UnitType> = new Set<UnitType>([
   UnitType.HydrogenBomb,
   UnitType.MIRV,
   UnitType.MIRVWarhead,
+  UnitType.ToxicMissile,
   UnitType.AttackPlane,
 ]);
 
@@ -1054,6 +1055,12 @@ export class GameView implements GameMap {
   }
   setFallout(ref: TileRef, value: boolean): void {
     return this._map.setFallout(ref, value);
+  }
+  hasToxicBit(ref: TileRef): boolean {
+    return this._map.hasToxicBit(ref);
+  }
+  setToxicBit(ref: TileRef, value: boolean): void {
+    return this._map.setToxicBit(ref, value);
   }
   isBorder(ref: TileRef): boolean {
     return this._map.isBorder(ref);

@@ -32,9 +32,13 @@ import {
 } from "../Transport";
 import { UIState } from "../UIState";
 
-/** True for nuke types (AtomBomb, HydrogenBomb): ghost is preserved after placement so user can place multiple or keep selection (Enter/key confirm). */
+/** True for nuke types (AtomBomb, HydrogenBomb, ToxicMissile): ghost is preserved after placement so user can place multiple or keep selection (Enter/key confirm). */
 export function shouldPreserveGhostAfterBuild(unitType: UnitType): boolean {
-  return unitType === UnitType.AtomBomb || unitType === UnitType.HydrogenBomb;
+  return (
+    unitType === UnitType.AtomBomb ||
+    unitType === UnitType.HydrogenBomb ||
+    unitType === UnitType.ToxicMissile
+  );
 }
 
 export class BuildPreviewController implements Controller {
@@ -139,7 +143,9 @@ export class BuildPreviewController implements Controller {
     if (
       tileRef &&
       myPlayer &&
-      (nukeType === UnitType.AtomBomb || nukeType === UnitType.HydrogenBomb)
+      (nukeType === UnitType.AtomBomb ||
+        nukeType === UnitType.HydrogenBomb ||
+        nukeType === UnitType.ToxicMissile)
     ) {
       this.connectedAllySmallIds.clear();
       const allies = myPlayer.allies();
@@ -232,7 +238,11 @@ export class BuildPreviewController implements Controller {
       return;
     }
     const type = this.ghostUnit.buildableUnit.type;
-    if (type !== UnitType.AtomBomb && type !== UnitType.HydrogenBomb) {
+    if (
+      type !== UnitType.AtomBomb &&
+      type !== UnitType.HydrogenBomb &&
+      type !== UnitType.ToxicMissile
+    ) {
       this.view.updateNukeTrajectory(null);
       return;
     }
@@ -325,6 +335,7 @@ export class BuildPreviewController implements Controller {
       }
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
+      case UnitType.ToxicMissile:
         rangeRadius = this.game.config().nukeMagnitudes(u.type).outer;
         break;
       case UnitType.Factory:
@@ -386,7 +397,9 @@ export class BuildPreviewController implements Controller {
     } else if (this.ghostUnit.buildableUnit.canBuild) {
       const unitType = this.ghostUnit.buildableUnit.type;
       const rocketDirectionUp =
-        unitType === UnitType.AtomBomb || unitType === UnitType.HydrogenBomb
+        unitType === UnitType.AtomBomb ||
+        unitType === UnitType.HydrogenBomb ||
+        unitType === UnitType.ToxicMissile
           ? this.uiState.rocketDirectionUp
           : undefined;
       this.eventBus.emit(

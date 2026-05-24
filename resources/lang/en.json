@@ -707,6 +707,7 @@
     "atom_bomb": "Atom Bomb",
     "hydrogen_bomb": "Hydrogen Bomb",
     "mirv": "MIRV",
+    "toxic_missile": "Missile Toxique",
     "factory": "Factory",
     "airport": "Aéroport",
     "plane": "Avion"
@@ -930,6 +931,7 @@
       "atom_bomb": "Small explosion",
       "hydrogen_bomb": "Large explosion",
       "mirv": "Huge explosion, only targets selected player",
+      "toxic_missile": "Élimine 77% des soldats de la ligne de front touchée et répand une zone toxique pendant 2 min qui empêche 75% des troupes d'attaquer",
       "missile_silo": "Used to launch nukes",
       "sam_launcher": "Defends against incoming nukes",
       "warship": "Captures trade ships, destroys ships and boats",

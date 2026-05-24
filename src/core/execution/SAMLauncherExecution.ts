@@ -114,7 +114,12 @@ class SAMTargetingSystem {
     const nukes = this.mg.nearbyUnits(
       samTile,
       detectionRange,
-      [UnitType.AtomBomb, UnitType.HydrogenBomb, UnitType.AttackPlane],
+      [
+        UnitType.AtomBomb,
+        UnitType.HydrogenBomb,
+        UnitType.ToxicMissile,
+        UnitType.AttackPlane,
+      ],
       ({ unit }) => {
         if (!isUnit(unit) || unit.targetedBySAM()) return false;
         if (unit.owner() === this.sam.owner()) return false;

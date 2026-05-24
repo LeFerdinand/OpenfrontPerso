@@ -65,6 +65,7 @@ export class StructureLevelPass {
   private uIconSize: WebGLUniformLocation;
   private uDotsThreshold: WebGLUniformLocation;
   private uScaleFactor: WebGLUniformLocation;
+  private uShapeScales: WebGLUniformLocation;
   private uDistRange: WebGLUniformLocation;
   private uOutlineWidth: WebGLUniformLocation;
   private uLevelScale: WebGLUniformLocation;
@@ -152,6 +153,7 @@ export class StructureLevelPass {
       "uDotsThreshold",
     )!;
     this.uScaleFactor = gl.getUniformLocation(this.program, "uScaleFactor")!;
+    this.uShapeScales = gl.getUniformLocation(this.program, "uShapeScales")!;
     this.uDistRange = gl.getUniformLocation(this.program, "uDistRange")!;
     this.uOutlineWidth = gl.getUniformLocation(this.program, "uOutlineWidth")!;
     this.uLevelScale = gl.getUniformLocation(this.program, "uLevelScale")!;
@@ -231,7 +233,6 @@ export class StructureLevelPass {
 
     for (const unit of units.values()) {
       if (!STRUCTURE_TYPES.has(unit.unitType)) continue;
-      if (unit.level <= 1) continue;
 
       const levelStr = unit.level.toString();
       layoutString(
@@ -289,6 +290,13 @@ export class StructureLevelPass {
     gl.uniform1f(this.uIconSize, ss.iconSize);
     gl.uniform1f(this.uDotsThreshold, ss.dotsZoomThreshold);
     gl.uniform1f(this.uScaleFactor, ss.iconScaleFactorZoomedOut);
+
+    const shapeScales = new Float32Array(STRUCTURE_ORDER.length);
+    for (let i = 0; i < STRUCTURE_ORDER.length; i++) {
+      shapeScales[i] = ss.shapes[STRUCTURE_ORDER[i]]?.scale ?? 1.0;
+    }
+    gl.uniform1fv(this.uShapeScales, shapeScales);
+
     gl.uniform1f(this.uDistRange, this.distanceRange);
     gl.uniform1f(this.uOutlineWidth, sl.outlineWidth);
     gl.uniform1f(this.uLevelScale, sl.scale);

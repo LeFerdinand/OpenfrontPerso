@@ -116,6 +116,7 @@ export class StatsImpl implements Stats {
     value: BigIntLike,
   ): void {
     const type = unitTypeToBombUnit[nukeType];
+    if (type === undefined) return; // e.g. ToxicMissile — not in NukeType stats map
     const p = this._makePlayerStats(player);
     if (p === undefined) return;
     p.bombs ??= { [type]: [0n] };

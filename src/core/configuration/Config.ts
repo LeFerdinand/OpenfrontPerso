@@ -344,13 +344,7 @@ export class Config {
         break;
       case UnitType.Airport:
         info = {
-          cost: this.costWrapper(
-            // ~1.5x the port cost curve (port: cap 1M, x2 per level from 125k).
-            // Same shape, scaled up so airports stay distinctly more expensive.
-            (numUnits: number) =>
-              Math.min(1_500_000, Math.pow(2, numUnits) * 190_000),
-            UnitType.Airport,
-          ),
+          cost: this.costWrapper(() => 3_000_000, UnitType.Airport),
           constructionDuration: this.instantBuild() ? 0 : 5 * 10,
           upgradable: true,
         };
@@ -376,6 +370,11 @@ export class Config {
       case UnitType.HydrogenBomb:
         info = {
           cost: this.costWrapper(() => 5_000_000, UnitType.HydrogenBomb),
+        };
+        break;
+      case UnitType.ToxicMissile:
+        info = {
+          cost: this.costWrapper(() => 1_500_000, UnitType.ToxicMissile),
         };
         break;
       case UnitType.MIRV:
@@ -663,6 +662,12 @@ export class Config {
       speed *= this.falloutDefenseModifier(falloutRatio);
     }
 
+    // Toxic zone: 75% of attacking troops are suppressed inside the zone,
+    // so only 25% of the incoming troop count is effective against this tile.
+    if (gm.isToxic(tileToConquer)) {
+      attackTroops = attackTroops * 0.25;
+    }
+
     if (attacker.isPlayer() && defender.isPlayer()) {
       if (defender.isDisconnected() && attacker.isOnSameTeam(defender)) {
         // No troop loss if defender is disconnected and on same team
@@ -886,6 +891,8 @@ export class Config {
       case UnitType.MIRVWarhead:
         return { inner: 12, outer: 18 };
       case UnitType.AtomBomb:
+        return { inner: 12, outer: 30 };
+      case UnitType.ToxicMissile:
         return { inner: 12, outer: 30 };
       case UnitType.HydrogenBomb:
         return { inner: 80, outer: 100 };

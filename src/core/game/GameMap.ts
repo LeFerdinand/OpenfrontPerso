@@ -33,6 +33,8 @@ export interface GameMap {
   setOwnerID(ref: TileRef, playerId: number): void;
   hasFallout(ref: TileRef): boolean;
   setFallout(ref: TileRef, value: boolean): void;
+  hasToxicBit(ref: TileRef): boolean;
+  setToxicBit(ref: TileRef, value: boolean): void;
   isOnEdgeOfMap(ref: TileRef): boolean;
   isBorder(ref: TileRef): boolean;
   neighbors(ref: TileRef): TileRef[];
@@ -112,7 +114,7 @@ export class GameMapImpl implements GameMap {
   private static readonly PLAYER_ID_MASK = 0xfff;
   private static readonly FALLOUT_BIT = 13;
   private static readonly DEFENSE_BONUS_BIT = 14;
-  // Bit 15 still reserved
+  private static readonly TOXIC_BIT = 15;
 
   constructor(
     width: number,
@@ -277,6 +279,18 @@ export class GameMapImpl implements GameMap {
         this._numTilesWithFallout--;
         this.state[ref] &= ~(1 << GameMapImpl.FALLOUT_BIT);
       }
+    }
+  }
+
+  hasToxicBit(ref: TileRef): boolean {
+    return Boolean(this.state[ref] & (1 << GameMapImpl.TOXIC_BIT));
+  }
+
+  setToxicBit(ref: TileRef, value: boolean): void {
+    if (value) {
+      this.state[ref] |= 1 << GameMapImpl.TOXIC_BIT;
+    } else {
+      this.state[ref] &= ~(1 << GameMapImpl.TOXIC_BIT);
     }
   }
 

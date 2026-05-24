@@ -16,6 +16,9 @@ uniform float uZoom;
 uniform float uIconSize;
 uniform float uDotsThreshold;
 uniform float uScaleFactor;
+// Per-shape scale, indexed by atlas column — keeps label tracking the actual
+// icon top edge (matches uShapeScales in structure.vert.glsl).
+uniform float uShapeScales[6];
 
 // Text sizing
 uniform float uFontSize;
@@ -51,7 +54,8 @@ void main() {
   vAlive = 1.0;
   vAtlasIdx = aAtlasIdx;
 
-  float halfIconSize = uIconSize * iconScale * 0.5 / uZoom;
+  float shapeScale = uShapeScales[int(aAtlasIdx)];
+  float halfIconSize = uIconSize * iconScale * 0.5 / uZoom * shapeScale;
 
   // Level text scale: proportional to icon size
   float levelScale = halfIconSize * uLevelScale / uFontSize;
@@ -78,7 +82,7 @@ void main() {
   // Position above icon center
   vec2 center = vec2(worldX + 0.5, worldY + 0.5);
   float baselineY = -uBase * 0.5;
-  float yOff = -halfIconSize - levelScale * uBase * 0.6;  // above icon top edge
+  float yOff = -halfIconSize - levelScale * uBase * 0.1;  // above icon top edge
 
   vec2 glyphOrigin = vec2(
     cursorX + m0.y,  // + xoffset

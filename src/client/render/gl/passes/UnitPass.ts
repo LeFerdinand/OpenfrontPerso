@@ -44,6 +44,7 @@ import {
   UT_PLANE,
   UT_SAM_MISSILE,
   UT_SHELL,
+  UT_TOXIC_MISSILE,
   UT_TRADE_SHIP,
   UT_TRAIN,
   UT_TRANSPORT,
@@ -137,7 +138,11 @@ const MISSILE_TYPES: ReadonlySet<string> = new Set([
   UT_SAM_MISSILE,
   UT_SHELL,
   UT_MIRV_WARHEAD,
+  UT_TOXIC_MISSILE,
 ]);
+
+/** Column the ToxicMissile reuses (no dedicated sprite — borrows the atom-bomb art). */
+const ATOM_BOMB_COL = UNIT_ORDER.indexOf(UT_ATOM_BOMB);
 
 /**
  * Draws a small top-down airplane silhouette in the given atlas cell.
@@ -447,6 +452,11 @@ export class UnitPass {
       // ALL_UNIT_TYPES so we don't have to allocate a new atlas column.
       if (atlasIdx === undefined && unit.unitType === UT_ATTACK_PLANE) {
         atlasIdx = PLANE_COL;
+      }
+
+      // Toxic missile shares the atom-bomb sprite slot.
+      if (atlasIdx === undefined && unit.unitType === UT_TOXIC_MISSILE) {
+        atlasIdx = ATOM_BOMB_COL;
       }
 
       // Train sub-type resolution: "Train" isn't in UNIT_ORDER.
