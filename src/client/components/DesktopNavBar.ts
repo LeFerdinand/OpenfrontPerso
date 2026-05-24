@@ -54,7 +54,7 @@ export class DesktopNavBar extends LitElement {
         <!-- LEFT: brand stack (click → site principal) -->
         <a
           class="pix-nav__brand"
-          href="https://lataniere.fr"
+          href="https://lataniereplay.fr"
           aria-label="Retour à La tanière"
         >
           <div class="pix-nav__brand-main">OPENFRONT</div>
