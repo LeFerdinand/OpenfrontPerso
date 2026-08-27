@@ -140,6 +140,13 @@ export class ServerEnv {
       Boolean(ServerEnv.otelAuthHeader())
     );
   }
+  // Matchmaking polls `${jwtIssuer()}/matchmaking/checkin` (the closed-source
+  // API, not in this repo) every ~5s. Self-hosted forks without that API
+  // deployed at `api.${DOMAIN}` have nothing to talk to there — enabled by
+  // default (matches upstream), set MATCHMAKING_ENABLED=false to silence it.
+  static matchmakingEnabled(): boolean {
+    return (process.env.MATCHMAKING_ENABLED ?? "true") !== "false";
+  }
   static otelEndpoint(): string {
     return process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "";
   }
